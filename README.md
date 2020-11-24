@@ -1,6 +1,6 @@
 # walletconnect-v2-test-wallet
 
-Test Wallet (Web)
+Test Wallet for WalletConnect 2.0 Protocol (Browser)
 
 ## Develop
 
