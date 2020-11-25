@@ -3,15 +3,15 @@ import styled from "styled-components";
 
 import { colors } from "../styles";
 
-interface ICardStyleProps {
+interface CardStyleProps {
   maxWidth: number;
 }
 
-interface ICardProps extends ICardStyleProps {
+interface CardProps extends CardStyleProps {
   children: React.ReactNode;
 }
 
-const SCard = styled.div<ICardStyleProps>`
+const SCard = styled.div<CardStyleProps>`
   width: 100%;
   max-width: ${({ maxWidth }) => `${maxWidth}px`};
   display: flex;
@@ -24,7 +24,7 @@ const SCard = styled.div<ICardStyleProps>`
   padding: 20px;
 `;
 
-const Card = (props: ICardProps) => {
+const Card = (props: CardProps) => {
   return (
     <SCard {...props} maxWidth={props.maxWidth}>
       {props.children}

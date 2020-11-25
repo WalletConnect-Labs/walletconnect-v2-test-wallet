@@ -1,10 +1,11 @@
 import * as React from "react";
 import styled from "styled-components";
-import Dropdown from "../components/Dropdown";
-import { IChainData } from "../helpers/types";
-import { ellipseAddress, getViewportDimensions } from "../helpers/utilities";
-import { responsive } from "../styles";
+
+import Dropdown from "./Dropdown";
 import Blockie from "./Blockie";
+
+import { ChainConfig, ellipseAddress, getViewportDimensions } from "../helpers";
+import { responsive } from "../styles";
 
 const SSection = styled.div`
   width: 100%;
@@ -24,17 +25,17 @@ const SAddressDropdownWrapper = styled.div`
   align-items: center;
 `;
 
-interface IAccountDetailsProps {
-  chains: IChainData[];
+interface AccountDetailsProps {
+  chains: ChainConfig[];
   updateAddress?: any;
   updateChain?: any;
   accounts: string[];
   activeIndex: number;
   address: string;
-  chainId: number;
+  chainId: string;
 }
 
-const AccountDetails = (props: IAccountDetailsProps) => {
+const AccountDetails = (props: AccountDetailsProps) => {
   const { chains, chainId, address, activeIndex, accounts, updateAddress, updateChain } = props;
   const windowWidth = getViewportDimensions().x;
   const maxWidth = 468;

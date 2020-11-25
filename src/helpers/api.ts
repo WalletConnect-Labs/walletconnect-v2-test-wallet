@@ -1,7 +1,8 @@
 import axios, { AxiosInstance } from "axios";
-import { IJsonRpcRequest } from "@walletconnect/types";
-import { IAssetData, IGasPrices, IParsedTx } from "./types";
-import { payloadId, getChainData } from "./utilities";
+import { JsonRpcRequest, payloadId } from "rpc-json-utils";
+
+import { AssetMetadata, GasPrices, ParsedTx } from "./types";
+import { getChainConfig } from "./chains";
 
 const api: AxiosInstance = axios.create({
   baseURL: "https://ethereum-api.xyz",
@@ -12,8 +13,8 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-export const apiSendTransaction = async (txParams: any, chainId: number): Promise<number> => {
-  const rpcUrl = getChainData(chainId).rpc_url;
+export const apiSendTransaction = async (txParams: any, chainId: string): Promise<number> => {
+  const { rpcUrl } = getChainConfig(chainId);
 
   if (!rpcUrl && typeof rpcUrl !== "string") {
     throw new Error("Invalid or missing rpc url");
@@ -30,7 +31,10 @@ export const apiSendTransaction = async (txParams: any, chainId: number): Promis
   return result;
 };
 
-export async function apiGetAccountAssets(address: string, chainId: number): Promise<IAssetData[]> {
+export async function apiGetAccountAssets(
+  address: string,
+  chainId: string,
+): Promise<AssetMetadata[]> {
   const response = await api.get(`/account-assets?address=${address}&chainId=${chainId}`);
   const { result } = response.data;
   return result;
@@ -38,34 +42,34 @@ export async function apiGetAccountAssets(address: string, chainId: number): Pro
 
 export async function apiGetAccountTransactions(
   address: string,
-  chainId: number,
-): Promise<IParsedTx[]> {
+  chainId: string,
+): Promise<ParsedTx[]> {
   const response = await api.get(`/account-transactions?address=${address}&chainId=${chainId}`);
   const { result } = response.data;
   return result;
 }
 
-export const apiGetAccountNonce = async (address: string, chainId: number): Promise<string> => {
+export const apiGetAccountNonce = async (address: string, chainId: string): Promise<string> => {
   const response = await api.get(`/account-nonce?address=${address}&chainId=${chainId}`);
   const { result } = response.data;
   return result;
 };
 
-export const apiGetGasPrices = async (): Promise<IGasPrices> => {
+export const apiGetGasPrices = async (): Promise<GasPrices> => {
   const response = await api.get(`/gas-prices`);
   const { result } = response.data;
   return result;
 };
 
-export const apiGetBlockNumber = async (chainId: number): Promise<IGasPrices> => {
+export const apiGetBlockNumber = async (chainId: string): Promise<GasPrices> => {
   const response = await api.get(`/block-number?chainId=${chainId}`);
   const { result } = response.data;
   return result;
 };
 
 export const apiGetCustomRequest = async (
-  chainId: number,
-  customRpc: Partial<IJsonRpcRequest>,
+  chainId: string,
+  customRpc: Partial<JsonRpcRequest>,
 ): Promise<any> => {
   const response = await api.post(`config-request?chainId=${chainId}`, customRpc);
   const { result } = response.data;

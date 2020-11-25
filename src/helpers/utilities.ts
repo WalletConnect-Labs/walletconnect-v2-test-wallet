@@ -1,7 +1,3 @@
-import { convertHexToUtf8 } from "@walletconnect/utils";
-import { IChainData } from "./types";
-import { SUPPORTED_CHAINS } from "../constants";
-
 export function capitalize(string: string): string {
   return string
     .split(" ")
@@ -34,34 +30,6 @@ export function ellipseText(text = "", maxLength = 9999): string {
 
 export function ellipseAddress(address = "", width = 10): string {
   return `${address.slice(0, width)}...${address.slice(-width)}`;
-}
-
-export function padLeft(n: string, width: number, z?: string): string {
-  z = z || "0";
-  n = n + "";
-  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-}
-
-export function sanitizeHex(hex: string): string {
-  hex = hex.substring(0, 2) === "0x" ? hex.substring(2) : hex;
-  if (hex === "") {
-    return "";
-  }
-  hex = hex.length % 2 !== 0 ? "0" + hex : hex;
-  return "0x" + hex;
-}
-
-export function removeHexPrefix(hex: string): string {
-  return hex.toLowerCase().replace("0x", "");
-}
-
-export function getDataString(func: string, arrVals: any[]): string {
-  let val = "";
-  for (let i = 0; i < arrVals.length; i++) {
-    val += padLeft(arrVals[i], 64);
-  }
-  const data = func + val;
-  return data;
 }
 
 export function isMobile(): boolean {
@@ -97,38 +65,6 @@ export function isMobile(): boolean {
   return mobile;
 }
 
-export function payloadId(): number {
-  const datePart: number = new Date().getTime() * Math.pow(10, 3);
-  const extraPart: number = Math.floor(Math.random() * Math.pow(10, 3));
-  const id: number = datePart + extraPart;
-  return id;
-}
-
-export function getChainData(chainId: number): IChainData {
-  const chainData = SUPPORTED_CHAINS.filter((chain: any) => chain.chain_id === chainId)[0];
-
-  if (!chainData) {
-    throw new Error("ChainId missing or not supported");
-  }
-
-  const API_KEY = process.env.REACT_APP_INFURA_PROJECT_ID;
-
-  if (
-    chainData.rpc_url.includes("infura.io") &&
-    chainData.rpc_url.includes("%API_KEY%") &&
-    API_KEY
-  ) {
-    const rpcUrl = chainData.rpc_url.replace("%API_KEY%", API_KEY);
-
-    return {
-      ...chainData,
-      rpc_url: rpcUrl,
-    };
-  }
-
-  return chainData;
-}
-
 export function getViewportDimensions() {
   const w = window;
   const d = document;
@@ -138,71 +74,4 @@ export function getViewportDimensions() {
   const y = w.innerHeight || e.clientHeight || g.clientHeight;
 
   return { x, y };
-}
-
-export function convertHexToUtf8IfPossible(hex: string) {
-  try {
-    return convertHexToUtf8(hex);
-  } catch (e) {
-    return hex;
-  }
-}
-
-export function prettyPrint(obj: any) {
-  return JSON.stringify(obj, null, 2);
-}
-
-export function verifyPayload(payload: any) {
-  const { params, id, method } = payload;
-
-  if (!params || typeof params !== "object") {
-    throw new Error(
-      `WalletConnect Error - invalid payload params. Payload: ${prettyPrint(payload)}`,
-    );
-  }
-
-  if (!id || typeof id !== "number") {
-    throw new Error(`WalletConnect Error - invalid payload id. Payload: ${prettyPrint(payload)}`);
-  }
-
-  if (!method || typeof method !== "string") {
-    throw new Error(
-      `WalletConnect Error - invalid payload method. Payload: ${prettyPrint(payload)}`,
-    );
-  }
-
-  return;
-}
-
-export function verifyFields(params: any[], keys: any[]) {
-  if (keys.length <= 0 || keys.filter((k: any) => typeof k !== "string").length !== 0) {
-    throw new Error(`[verifyFields] Must provide an array of fields to check`);
-  }
-  if (typeof params !== "object") {
-    throw new Error(`[verifyFields] Must provide a params object`);
-  }
-
-  const naStr = keys.filter(k => !params[k]);
-  if (naStr.length !== 0) {
-    throw new Error(
-      `[verifyFields] Params missing needed keys. Params: ${prettyPrint(
-        params,
-      )}, keys: ${prettyPrint(keys)}`,
-    );
-  }
-  return;
-}
-
-export function getCachedSession(): any {
-  const local = localStorage ? localStorage.getItem("walletconnect") : null;
-
-  let session = null;
-  if (local) {
-    try {
-      session = JSON.parse(local);
-    } catch (error) {
-      throw error;
-    }
-  }
-  return session;
 }

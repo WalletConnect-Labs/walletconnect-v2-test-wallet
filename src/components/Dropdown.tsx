@@ -3,14 +3,14 @@ import styled from "styled-components";
 import { colors, shadows, transitions } from "../styles";
 import ClickOutside from "./ClickOutside";
 
-interface IDropdownStyle {
+interface DropdownStyle {
   show?: boolean;
   selected?: boolean;
   disabled?: boolean;
   monospace?: boolean;
 }
 
-const SDropdown = styled.div<IDropdownStyle>`
+const SDropdown = styled.div<DropdownStyle>`
   transition: ${transitions.base};
   position: relative;
   width: 100%;
@@ -24,7 +24,7 @@ const SDropdown = styled.div<IDropdownStyle>`
   cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
 `;
 
-const SRow = styled.div<IDropdownStyle>`
+const SRow = styled.div<DropdownStyle>`
   transition: ${transitions.base};
   width: 100%;
   padding: 10px 20px;
@@ -39,7 +39,7 @@ const SRow = styled.div<IDropdownStyle>`
   }
 `;
 
-const SAbsolute = styled.div<IDropdownStyle>`
+const SAbsolute = styled.div<DropdownStyle>`
   transition: ${transitions.base};
   position: absolute;
   top: 100%;
@@ -55,13 +55,13 @@ const SAbsolute = styled.div<IDropdownStyle>`
   visibility: ${({ show }) => (show ? "visible" : "hidden")};
 `;
 
-interface IDropdownState {
+interface DropdownState {
   show: boolean;
   optionsDict: any;
   otherKeys: any[];
 }
 
-interface IDropdownProps {
+interface DropdownProps {
   selected: number | string;
   options: any[] | object;
   displayKey: number | string;
@@ -71,7 +71,7 @@ interface IDropdownProps {
   monospace?: boolean;
 }
 
-class Dropdown extends React.Component<IDropdownProps, IDropdownState> {
+class Dropdown extends React.Component<DropdownProps, DropdownState> {
   public state = {
     show: false,
     optionsDict: {},
@@ -83,7 +83,7 @@ class Dropdown extends React.Component<IDropdownProps, IDropdownState> {
     this.setState({ otherKeys, optionsDict });
   }
 
-  public componentDidUpdate(prevProps: IDropdownProps) {
+  public componentDidUpdate(prevProps: DropdownProps) {
     if (prevProps.selected !== this.props.selected) {
       const { otherKeys, optionsDict } = this.parseKeys(this.props);
       this.setState({ otherKeys, optionsDict });

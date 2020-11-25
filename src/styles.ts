@@ -1,6 +1,6 @@
-import { getAppConfig } from "./config";
-
-export const baseColors = {
+export const colors = {
+  defaultColor: "12, 12, 13",
+  backgroundColor: "40, 44, 52",
   white: "255, 255, 255",
   black: "0, 0, 0",
   dark: "12, 12, 13",
@@ -15,11 +15,6 @@ export const baseColors = {
   pink: "255, 51, 102",
   red: "214, 75, 71",
   purple: "110, 107, 233",
-};
-
-export const colors = {
-  ...baseColors,
-  ...getAppConfig().colors,
 };
 
 export const fonts = {

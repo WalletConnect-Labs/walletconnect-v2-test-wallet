@@ -1,8 +1,10 @@
 import * as React from "react";
 import styled from "styled-components";
+
 import Column from "./Column";
 import Button from "./Button";
-import { IRequestRenderParams } from "../helpers/types";
+
+import { RequestRenderParams } from "../helpers";
 
 const SRequestValues = styled.div`
   font-family: monospace;
@@ -42,7 +44,7 @@ class RequestDisplay extends React.Component<any, any> {
   public render() {
     const { payload, peerMeta, approveRequest, rejectRequest, renderPayload } = this.props;
 
-    const params: IRequestRenderParams[] = renderPayload(payload);
+    const params: RequestRenderParams[] = renderPayload(payload);
     console.log("RENDER", "method", payload.method);
     console.log("RENDER", "params", payload.params);
     console.log("RENDER", "formatted", params);

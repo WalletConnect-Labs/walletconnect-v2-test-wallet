@@ -1,26 +1,43 @@
-import { IJsonRpcRequest } from "@walletconnect/types";
-import { IAppState } from "../App";
+import Store from "@pedrouid/iso-store";
+import { JsonRpcRequest } from "rpc-json-utils";
+import { IJsonRpcSigner } from "rpc-json-signer";
+import { IJsonRpcAuthenticator } from "rpc-json-auth";
 
-export interface IAssetData {
+import { AppState } from "../App";
+
+export interface KeyringOptions {
+  store: Store;
+  mnemonic?: string;
+}
+
+export interface KeyPair {
+  privateKey: string;
+  publicKey: string;
+}
+
+export interface AssetMetadata {
   symbol: string;
   name: string;
   decimals: string;
-  contractAddress: string;
-  balance?: string;
 }
 
-export interface IChainData {
+export interface ChainConfig {
   name: string;
-  short_name: string;
-  chain: string;
-  network: string;
-  chain_id: number;
-  network_id: number;
-  rpc_url: string;
-  native_currency: IAssetData;
+  chainId: string;
+  rpcUrl: string;
+  derivationPath: string;
+  nativeAsset: AssetMetadata;
 }
 
-export interface ITxData {
+export type ChainSigner = IJsonRpcSigner;
+
+export type ChainAuthenticator = IJsonRpcAuthenticator;
+
+export interface NamespaceConfig {
+  [reference: string]: ChainConfig;
+}
+
+export interface TxData {
   from: string;
   to: string;
   nonce: string;
@@ -30,7 +47,7 @@ export interface ITxData {
   data: string;
 }
 
-export interface IBlockScoutTx {
+export interface BlockScoutTx {
   value: string;
   txreceipt_status: string;
   transactionIndex: string;
@@ -51,7 +68,7 @@ export interface IBlockScoutTx {
   blockHash: string;
 }
 
-export interface IBlockScoutTokenTx {
+export interface BlockScoutTokenTx {
   value: string;
   transactionIndex: string;
   tokenSymbol: string;
@@ -73,7 +90,7 @@ export interface IBlockScoutTokenTx {
   blockHash: string;
 }
 
-export interface IParsedTx {
+export interface ParsedTx {
   timestamp: string;
   hash: string;
   from: string;
@@ -85,19 +102,19 @@ export interface IParsedTx {
   value: string;
   input: string;
   error: boolean;
-  asset: IAssetData;
-  operations: ITxOperation[];
+  asset: AssetMetadata;
+  operations: TxOperation[];
 }
 
-export interface ITxOperation {
-  asset: IAssetData;
+export interface TxOperation {
+  asset: AssetMetadata;
   value: string;
   from: string;
   to: string;
   functionName: string;
 }
 
-export interface IGasPricesResponse {
+export interface GasPricesResponse {
   fastWait: number;
   avgWait: number;
   blockNum: number;
@@ -111,59 +128,41 @@ export interface IGasPricesResponse {
   average: number;
 }
 
-export interface IGasPrice {
+export interface GasPrice {
   time: number;
   price: number;
 }
 
-export interface IGasPrices {
+export interface GasPrices {
   timestamp: number;
-  slow: IGasPrice;
-  average: IGasPrice;
-  fast: IGasPrice;
+  slow: GasPrice;
+  average: GasPrice;
+  fast: GasPrice;
 }
 
-export interface IMethodArgument {
+export interface MethodArgument {
   type: string;
 }
 
-export interface IMethod {
+export interface Method {
   signature: string;
   name: string;
-  args: IMethodArgument[];
+  args: MethodArgument[];
 }
 
-export interface IRequestRenderParams {
+export interface RequestRenderParams {
   label: string;
   value: string;
 }
 
-export interface IRpcAuthenticator {
-  filter: (payload: IJsonRpcRequest) => boolean;
-  router: (payload: IJsonRpcRequest, state: IAppState, setState: any) => Promise<void>;
-  render: (payload: IJsonRpcRequest) => IRequestRenderParams[];
-  signer: (payload: IJsonRpcRequest, state: IAppState, setState: any) => Promise<void>;
+export interface RpcAuthenticator {
+  filter: (payload: JsonRpcRequest) => boolean;
+  router: (payload: JsonRpcRequest, state: AppState, setState: any) => Promise<void>;
+  render: (payload: JsonRpcRequest) => RequestRenderParams[];
+  signer: (payload: JsonRpcRequest, state: AppState, setState: any) => Promise<void>;
 }
 
-export interface IAppEvents {
-  init: (state: IAppState, setState: any) => Promise<void>;
-  update: (state: IAppState, setState: any) => Promise<void>;
-}
-
-export interface IAppConfig {
-  name: string;
-  logo: string;
-  chainId: number;
-  numberOfAccounts: number;
-  colors: {
-    defaultColor: string;
-    backgroundColor: string;
-  };
-  chains: IChainData[];
-  styleOpts: {
-    showPasteUri: boolean;
-    showVersion: boolean;
-  };
-  authenticators: IRpcAuthenticator[];
-  events: IAppEvents;
+export interface AppEvents {
+  init: (state: AppState, setState: any) => Promise<void>;
+  update: (state: AppState, setState: any) => Promise<void>;
 }

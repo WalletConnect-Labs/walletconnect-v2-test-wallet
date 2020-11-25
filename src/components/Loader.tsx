@@ -2,7 +2,7 @@ import * as React from "react";
 import styled, { keyframes } from "styled-components";
 import { fonts, colors } from "../styles";
 
-interface ILoaderStyleProps {
+interface LoaderStyleProps {
   size: number;
   color: string;
   background: string;
@@ -17,7 +17,7 @@ const load = keyframes`
   }
 `;
 
-const SLoader = styled.div<ILoaderStyleProps>`
+const SLoader = styled.div<LoaderStyleProps>`
   position: relative;
   font-size: ${fonts.size.tiny};
   margin: 0 auto;
@@ -57,7 +57,7 @@ const SLoader = styled.div<ILoaderStyleProps>`
   }
 `;
 
-const Loader = (props: ILoaderStyleProps) => (
+const Loader = (props: LoaderStyleProps) => (
   <SLoader {...props} size={props.size} color={props.color} background={props.background} />
 );
 

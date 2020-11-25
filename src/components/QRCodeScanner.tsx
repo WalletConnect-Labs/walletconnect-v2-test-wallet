@@ -52,23 +52,23 @@ const SSecondLine = styled(SFirstLine as any)`
   transform: rotate(90deg);
 `;
 
-export interface IQRCodeValidateResponse {
+export interface QRCodeValidateResponse {
   error: Error | null;
   result: any | null;
 }
 
-interface IQRCodeScannerProps {
-  onValidate: (data: string) => IQRCodeValidateResponse;
+interface QRCodeScannerProps {
+  onValidate: (data: string) => QRCodeValidateResponse;
   onScan: (data: any) => void;
   onError: (error: Error) => void;
   onClose: () => void;
 }
 
-interface IQRCodeScannerState {
+interface QRCodeScannerState {
   delay: number | false;
 }
 
-class QRCodeScanner extends React.Component<IQRCodeScannerProps, IQRCodeScannerState> {
+class QRCodeScanner extends React.Component<QRCodeScannerProps, QRCodeScannerState> {
   public state = {
     delay: 300,
   };

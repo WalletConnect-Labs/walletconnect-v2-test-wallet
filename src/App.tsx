@@ -1,6 +1,13 @@
 import * as React from "react";
 import styled from "styled-components";
-import WalletConnect from "@walletconnect/client";
+import Store from "@pedrouid/iso-store";
+import Client, { CLIENT_EVENTS } from "@walletconnect/client";
+import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "rpc-json-utils";
+import { getSessionMetadata } from "@walletconnect/utils";
+import { SessionTypes } from "@walletconnect/types";
+
+import { getChainAuthenticator, getChainConfig, getChainSigner, Keyring } from "./helpers";
+
 import Button from "./components/Button";
 import Card from "./components/Card";
 import Input from "./components/Input";
@@ -10,11 +17,18 @@ import PeerMeta from "./components/PeerMeta";
 import RequestDisplay from "./components/RequestDisplay";
 import RequestButton from "./components/RequestButton";
 import AccountDetails from "./components/AccountDetails";
-import QRCodeScanner, { IQRCodeValidateResponse } from "./components/QRCodeScanner";
-import { DEFAULT_CHAIN_ID, DEFAULT_ACTIVE_INDEX } from "./constants/default";
-import { getCachedSession } from "./helpers/utilities";
-import { getAppControllers } from "./controllers";
-import { getAppConfig } from "./config";
+import QRCodeScanner from "./components/QRCodeScanner";
+
+import logo from "./assets/walletconnect-logo.png";
+
+const DEFAULT_CHAIN_ID = "eip155:1";
+
+const EMPTY_METADATA = {
+  name: "",
+  description: "",
+  url: "",
+  icons: [],
+};
 
 const SContainer = styled.div`
   display: flex;
@@ -105,55 +119,40 @@ const SRequestButton = styled(RequestButton)`
   margin-bottom: 10px;
 `;
 
-export interface IAppState {
+export interface AppState {
+  client: Client | undefined;
+  store: Store | undefined;
+  keyring: Keyring | undefined;
+  proposal: SessionTypes.Proposal | undefined;
+  session: SessionTypes.Created | undefined;
   loading: boolean;
   scanner: boolean;
-  connector: WalletConnect | null;
-  uri: string;
-  peerMeta: {
-    description: string;
-    url: string;
-    icons: string[];
-    name: string;
-    ssl: boolean;
-  };
   connected: boolean;
-  chainId: number;
+  chainId: string;
   accounts: string[];
-  activeIndex: number;
-  address: string;
-  requests: any[];
+  requests: SessionTypes.PayloadEvent[];
   results: any[];
-  payload: any;
+  payload: SessionTypes.PayloadEvent | undefined;
 }
 
-export const DEFAULT_ACCOUNTS = getAppControllers().wallet.getAccounts();
-export const DEFAULT_ADDRESS = DEFAULT_ACCOUNTS[DEFAULT_ACTIVE_INDEX];
-
-export const INITIAL_STATE: IAppState = {
+export const INITIAL_STATE: AppState = {
+  client: undefined,
+  store: undefined,
+  keyring: undefined,
+  proposal: undefined,
+  session: undefined,
   loading: false,
   scanner: false,
-  connector: null,
-  uri: "",
-  peerMeta: {
-    description: "",
-    url: "",
-    icons: [],
-    name: "",
-    ssl: false,
-  },
   connected: false,
-  chainId: getAppConfig().chainId || DEFAULT_CHAIN_ID,
-  accounts: DEFAULT_ACCOUNTS,
-  address: DEFAULT_ADDRESS,
-  activeIndex: DEFAULT_ACTIVE_INDEX,
+  chainId: DEFAULT_CHAIN_ID,
+  accounts: [],
   requests: [],
   results: [],
-  payload: null,
+  payload: undefined,
 };
 
 class App extends React.Component<{}> {
-  public state: IAppState;
+  public state: AppState;
 
   constructor(props: any) {
     super(props);
@@ -166,91 +165,63 @@ class App extends React.Component<{}> {
   }
 
   public init = async () => {
-    let { activeIndex, chainId } = this.state;
-
-    const session = getCachedSession();
-
-    if (!session) {
-      await getAppControllers().wallet.init(activeIndex, chainId);
-    } else {
-      const connector = new WalletConnect({ session });
-
-      const { connected, accounts, peerMeta } = connector;
-
-      const address = accounts[0];
-
-      activeIndex = accounts.indexOf(address);
-      chainId = connector.chainId;
-
-      await getAppControllers().wallet.init(activeIndex, chainId);
-
-      await this.setState({
-        connected,
-        connector,
-        address,
-        activeIndex,
-        accounts,
-        chainId,
-        peerMeta,
-      });
-
-      this.subscribeToEvents();
-    }
-    await getAppConfig().events.init(this.state, this.bindedSetState);
-  };
-
-  public bindedSetState = (newState: Partial<IAppState>) => this.setState(newState);
-
-  public initWalletConnect = async () => {
-    const { uri } = this.state;
-
     this.setState({ loading: true });
-
     try {
-      const connector = new WalletConnect({ uri });
-
-      if (!connector.connected) {
-        await connector.createSession();
-      }
-
-      await this.setState({
-        loading: false,
-        connector,
-        uri: connector.uri,
-      });
-
+      const store = new Store();
+      await store.init();
+      const keyring = await Keyring.init({ store });
+      const client = await Client.init({ store });
+      this.setState({ loading: false, store, client, keyring });
       this.subscribeToEvents();
-    } catch (error) {
+    } catch (e) {
       this.setState({ loading: false });
-
-      throw error;
+      throw e;
     }
   };
 
-  public approveSession = () => {
+  public approveSession = async () => {
     console.log("ACTION", "approveSession");
-    const { connector, chainId, address } = this.state;
-    if (connector) {
-      connector.approveSession({ chainId, accounts: [address] });
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
     }
-    this.setState({ connector });
+    if (typeof this.state.proposal === "undefined") {
+      throw new Error("Proposal is undefined");
+    }
+    if (typeof this.state.accounts === "undefined") {
+      throw new Error("Accounts is undefined");
+    }
+    const response = {
+      state: { accountIds: this.state.accounts },
+      metadata: getSessionMetadata() || EMPTY_METADATA,
+    };
+    await this.state.client.respond({ approved: true, proposal: this.state.proposal, response });
+    this.setState({ proposal: undefined });
   };
 
-  public rejectSession = () => {
+  public rejectSession = async () => {
     console.log("ACTION", "rejectSession");
-    const { connector } = this.state;
-    if (connector) {
-      connector.rejectSession();
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
     }
-    this.setState({ connector });
+    if (typeof this.state.proposal === "undefined") {
+      throw new Error("Proposal is undefined");
+    }
+    const response = { state: { accountIds: [] }, metadata: EMPTY_METADATA };
+    await this.state.client.respond({ approved: false, proposal: this.state.proposal, response });
   };
 
   public killSession = () => {
     console.log("ACTION", "killSession");
-    const { connector } = this.state;
-    if (connector) {
-      connector.killSession();
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
     }
+    if (typeof this.state.session === "undefined") {
+      throw new Error("Session is not created");
+    }
+    this.state.client.disconnect({
+      topic: this.state.session.topic,
+      reason: "User disconnected session",
+    });
     this.resetApp();
   };
 
@@ -261,104 +232,42 @@ class App extends React.Component<{}> {
 
   public subscribeToEvents = () => {
     console.log("ACTION", "subscribeToEvents");
-    const { connector } = this.state;
 
-    if (connector) {
-      connector.on("session_request", (error, payload) => {
-        console.log("EVENT", "session_request");
-
-        if (error) {
-          throw error;
-        }
-
-        const { peerMeta } = payload.params[0];
-        this.setState({ peerMeta });
-      });
-
-      connector.on("session_update", error => {
-        console.log("EVENT", "session_update");
-
-        if (error) {
-          throw error;
-        }
-      });
-
-      connector.on("call_request", async (error, payload) => {
-        // tslint:disable-next-line
-        console.log("EVENT", "call_request", "method", payload.method);
-        console.log("EVENT", "call_request", "params", payload.params);
-
-        if (error) {
-          throw error;
-        }
-
-        await getAppConfig().rpcAuthenticator.router(payload, this.state, this.bindedSetState);
-      });
-
-      connector.on("connect", (error, payload) => {
-        console.log("EVENT", "connect");
-
-        if (error) {
-          throw error;
-        }
-
-        this.setState({ connected: true });
-      });
-
-      connector.on("disconnect", (error, payload) => {
-        console.log("EVENT", "disconnect");
-
-        if (error) {
-          throw error;
-        }
-
-        this.resetApp();
-      });
-
-      if (connector.connected) {
-        const { chainId, accounts } = connector;
-        const index = 0;
-        const address = accounts[index];
-        getAppControllers().wallet.update(index, chainId);
-        this.setState({
-          connected: true,
-          address,
-          chainId,
-        });
-      }
-
-      this.setState({ connector });
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
     }
-  };
 
-  public updateSession = async (sessionParams: { chainId?: number; activeIndex?: number }) => {
-    const { connector, chainId, accounts, activeIndex } = this.state;
-    const newChainId = sessionParams.chainId || chainId;
-    const newActiveIndex = sessionParams.activeIndex || activeIndex;
-    const address = accounts[newActiveIndex];
-    if (connector) {
-      connector.updateSession({
-        chainId: newChainId,
-        accounts: [address],
-      });
-    }
-    await this.setState({
-      connector,
-      address,
-      accounts,
-      activeIndex: newActiveIndex,
-      chainId: newChainId,
+    this.state.client.on(CLIENT_EVENTS.session.proposal, (proposal: SessionTypes.Proposal) => {
+      console.log("EVENT", "session_proposal");
+      this.setState({ proposal });
     });
-    await getAppControllers().wallet.update(newActiveIndex, newChainId);
-    await getAppConfig().events.update(this.state, this.bindedSetState);
-  };
 
-  public updateChain = async (chainId: number | string) => {
-    await this.updateSession({ chainId: Number(chainId) });
-  };
+    this.state.client.on(
+      CLIENT_EVENTS.session.payload,
+      async (payloadEvent: SessionTypes.PayloadEvent) => {
+        if (isJsonRpcRequest(payloadEvent.payload)) {
+          // tslint:disable-next-line
+          console.log("EVENT", "session_payload", payloadEvent.payload);
+          const chainId = payloadEvent.chainId || this.state.chainId;
+          const response = await getChainAuthenticator(chainId).resolve(payloadEvent.payload);
+          if (typeof response !== "undefined") {
+            await this.resolveRequest(payloadEvent.topic, response);
+          } else {
+            this.setState({ requests: [...this.state.requests, payloadEvent] });
+          }
+        }
+      },
+    );
 
-  public updateAddress = async (activeIndex: number) => {
-    await this.updateSession({ activeIndex });
+    this.state.client.on(CLIENT_EVENTS.session.created, () => {
+      console.log("EVENT", "session_created");
+      this.setState({ connected: true });
+    });
+
+    this.state.client.on(CLIENT_EVENTS.session.deleted, () => {
+      console.log("EVENT", "session_deleted");
+      this.resetApp();
+    });
   };
 
   public toggleScanner = () => {
@@ -366,11 +275,8 @@ class App extends React.Component<{}> {
     this.setState({ scanner: !this.state.scanner });
   };
 
-  public onQRCodeValidate = (data: string): IQRCodeValidateResponse => {
-    const res: IQRCodeValidateResponse = {
-      error: null,
-      result: null,
-    };
+  public onQRCodeValidate = (data: string) => {
+    const res: any = { error: null, result: null };
     try {
       res.result = data;
     } catch (error) {
@@ -381,21 +287,24 @@ class App extends React.Component<{}> {
   };
 
   public onQRCodeScan = async (data: any) => {
-    const uri = typeof data === "string" ? data : "";
-    if (uri) {
-      await this.setState({ uri });
-      await this.initWalletConnect();
-      this.toggleScanner();
-    }
+    this.onURI(data);
+    this.toggleScanner();
   };
 
   public onURIPaste = async (e: any) => {
     const data = e.target.value;
+    this.onURI(data);
+  };
+
+  public onURI = async (data: any) => {
     const uri = typeof data === "string" ? data : "";
-    if (uri) {
-      await this.setState({ uri });
-      await this.initWalletConnect();
+    if (!uri) {
+      return;
     }
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
+    }
+    await this.state.client.respond({ approved: true, uri });
   };
 
   public onQRCodeError = (error: Error) => {
@@ -404,78 +313,87 @@ class App extends React.Component<{}> {
 
   public onQRCodeClose = () => this.toggleScanner();
 
-  public openRequest = (request: any) => this.setState({ payload: request });
+  public openRequest = (request: SessionTypes.PayloadEvent) => this.setState({ payload: request });
 
   public closeRequest = async () => {
-    const { requests, payload } = this.state;
-    const filteredRequests = requests.filter(request => request.id !== payload.id);
-    await this.setState({
-      requests: filteredRequests,
-      payload: null,
-    });
+    if (typeof this.state.payload === "undefined") {
+      throw new Error("Payload is undefined");
+    }
+    const filteredRequests = this.state.requests.filter(
+      request => request.payload.id !== this.state.payload?.payload.id,
+    );
+    await this.setState({ requests: filteredRequests, payload: undefined });
+  };
+
+  public resolveRequest = async (topic: string, response: JsonRpcResponse) => {
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
+    }
+    await this.state.client.resolve({ topic, response });
   };
 
   public approveRequest = async () => {
-    const { connector, payload } = this.state;
-
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
+    }
     try {
-      await getAppConfig().rpcAuthenticator.signer(payload, this.state, this.bindedSetState);
+      if (typeof this.state.payload === "undefined") {
+        throw new Error("Payload is undefined");
+      }
+      const chainId = this.state.payload.chainId || this.state.chainId;
+      const response = await getChainSigner(chainId).request(this.state.payload.payload as any);
+      this.state.client.resolve({
+        topic: this.state.payload.topic,
+        response,
+      });
     } catch (error) {
       console.error(error);
-      if (connector) {
-        connector.rejectRequest({
-          id: payload.id,
-          error: { message: "Failed or Rejected Request" },
-        });
+      if (typeof this.state.payload === "undefined") {
+        throw new Error("Payload is undefined");
       }
+      this.state.client.resolve({
+        topic: this.state.payload.topic,
+        response: formatJsonRpcError(this.state.payload.payload.id, "Failed or Rejected Request"),
+      });
     }
 
     this.closeRequest();
-    await this.setState({ connector });
   };
 
   public rejectRequest = async () => {
-    const { connector, payload } = this.state;
-    if (connector) {
-      connector.rejectRequest({
-        id: payload.id,
-        error: { message: "Failed or Rejected Request" },
-      });
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
     }
+    if (typeof this.state.payload === "undefined") {
+      throw new Error("Payload is undefined");
+    }
+    this.state.client.resolve({
+      topic: this.state.payload.topic,
+      response: formatJsonRpcError(this.state.payload.payload.id, "Failed or Rejected Request"),
+    });
     await this.closeRequest();
-    await this.setState({ connector });
   };
 
   public render() {
-    const {
-      peerMeta,
-      scanner,
-      connected,
-      activeIndex,
-      accounts,
-      address,
-      chainId,
-      requests,
-      payload,
-    } = this.state;
+    const { scanner, connected, accounts, session, chainId, requests, payload } = this.state;
     return (
       <React.Fragment>
         <SContainer>
           <Header
             connected={connected}
-            address={address}
+            address={accounts[0]}
             chainId={chainId}
             killSession={this.killSession}
           />
           <SContent>
             <Card maxWidth={400}>
               <SLogo>
-                <img src={getAppConfig().logo} alt={getAppConfig().name} />
+                <img src={logo} alt={"WalletConnect"} />
               </SLogo>
               {!connected ? (
-                peerMeta && peerMeta.name ? (
+                session && session.peer ? (
                   <Column>
-                    <PeerMeta peerMeta={peerMeta} />
+                    <PeerMeta peerMeta={session.peer.metadata} />
                     <SActions>
                       <Button onClick={this.approveSession}>{`Approve`}</Button>
                       <Button onClick={this.rejectSession}>{`Reject`}</Button>
@@ -484,50 +402,50 @@ class App extends React.Component<{}> {
                 ) : (
                   <Column>
                     <AccountDetails
-                      chains={getAppConfig().chains}
-                      address={address}
-                      activeIndex={activeIndex}
+                      chains={[getChainConfig(chainId)]}
+                      address={accounts[0]}
                       chainId={chainId}
                       accounts={accounts}
-                      updateAddress={this.updateAddress}
-                      updateChain={this.updateChain}
+                      activeIndex={0}
                     />
                     <SActionsColumn>
                       <SButton onClick={this.toggleScanner}>{`Scan`}</SButton>
-                      {getAppConfig().styleOpts.showPasteUri && (
-                        <>
-                          <p>{"OR"}</p>
-                          <SInput onChange={this.onURIPaste} placeholder={"Paste wc: uri"} />
-                        </>
-                      )}
+                      <p>{"OR"}</p>
+                      <SInput onChange={this.onURIPaste} placeholder={"Paste wc: uri"} />
                     </SActionsColumn>
                   </Column>
                 )
               ) : !payload ? (
                 <Column>
                   <AccountDetails
-                    chains={getAppConfig().chains}
-                    address={address}
-                    activeIndex={activeIndex}
+                    chains={[getChainConfig(chainId)]}
+                    address={accounts[0]}
                     chainId={chainId}
                     accounts={accounts}
-                    updateAddress={this.updateAddress}
-                    updateChain={this.updateChain}
+                    activeIndex={0}
                   />
-                  {peerMeta && peerMeta.name && (
+                  {session && session.peer ? (
                     <>
                       <h6>{"Connected to"}</h6>
                       <SConnectedPeer>
-                        <img src={peerMeta.icons[0]} alt={peerMeta.name} />
-                        <div>{peerMeta.name}</div>
+                        <img
+                          src={session.peer.metadata.icons[0]}
+                          alt={session.peer.metadata.name}
+                        />
+                        <div>{session.peer.metadata.name}</div>
                       </SConnectedPeer>
                     </>
-                  )}
+                  ) : null}
                   <h6>{"Pending Call Requests"}</h6>
                   {requests.length ? (
                     requests.map(request => (
-                      <SRequestButton key={request.id} onClick={() => this.openRequest(request)}>
-                        <div>{request.method}</div>
+                      <SRequestButton
+                        key={request.payload.id}
+                        onClick={() => this.openRequest(request)}
+                      >
+                        <div>
+                          {isJsonRpcRequest(request.payload) ? request.payload.method : "unknown"}
+                        </div>
                       </SRequestButton>
                     ))
                   ) : (
@@ -539,8 +457,8 @@ class App extends React.Component<{}> {
               ) : (
                 <RequestDisplay
                   payload={payload}
-                  peerMeta={peerMeta}
-                  renderPayload={(payload: any) => getAppConfig().rpcAuthenticator.render(payload)}
+                  peerMeta={session?.peer.metadata || EMPTY_METADATA}
+                  renderPayload={(payload: any) => payload}
                   approveRequest={this.approveRequest}
                   rejectRequest={this.rejectRequest}
                 />
@@ -556,9 +474,7 @@ class App extends React.Component<{}> {
             />
           )}
         </SContainer>
-        {getAppConfig().styleOpts.showVersion && (
-          <SVersionNumber>{`v${process.env.REACT_APP_VERSION}`} </SVersionNumber>
-        )}
+        <SVersionNumber>{`v${process.env.REACT_APP_VERSION}`} </SVersionNumber>
       </React.Fragment>
     );
   }

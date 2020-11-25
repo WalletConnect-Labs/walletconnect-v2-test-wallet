@@ -1,11 +1,11 @@
 import * as React from "react";
 import * as PropTypes from "prop-types";
 
-interface IClickOutsideProps {
+interface ClickOutsideProps {
   onClickOutside: (event: any) => void;
 }
 
-class ClickOutside extends React.Component<IClickOutsideProps> {
+class ClickOutside extends React.Component<ClickOutsideProps> {
   public static propTypes = {
     onClickOutside: PropTypes.func.isRequired,
   };

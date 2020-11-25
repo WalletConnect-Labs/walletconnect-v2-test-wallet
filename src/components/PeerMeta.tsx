@@ -1,6 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
-import { IClientMeta } from "@walletconnect/types";
+import { SessionTypes } from "@walletconnect/types";
 
 const SIcon = styled.img`
   width: 100px;
@@ -15,11 +15,11 @@ const SName = styled(SCenter as any)`
   font-weight: bold;
 `;
 
-interface IPeerMetaProps {
-  peerMeta: IClientMeta;
+interface PeerMetaProps {
+  peerMeta: SessionTypes.Metadata;
 }
 
-const PeerMeta = (props: IPeerMetaProps) => (
+const PeerMeta = (props: PeerMetaProps) => (
   <>
     <SIcon src={props.peerMeta.icons[0]} alt={props.peerMeta.name} />
     <SName>{props.peerMeta.name}</SName>

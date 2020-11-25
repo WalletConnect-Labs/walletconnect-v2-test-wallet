@@ -2,7 +2,8 @@ import * as React from "react";
 import styled from "styled-components";
 
 import Blockie from "./Blockie";
-import { ellipseAddress, getChainData } from "../helpers/utilities";
+
+import { ellipseAddress, getChainConfig } from "../helpers";
 import { fonts, responsive, transitions } from "../styles";
 
 const SHeader = styled.div`
@@ -40,11 +41,11 @@ const SActiveChain = styled(SActiveAccount as any)`
   }
 `;
 
-interface IHeaderStyle {
+interface HeaderStyle {
   connected: boolean;
 }
 
-const SAddress = styled.p<IHeaderStyle>`
+const SAddress = styled.p<HeaderStyle>`
   transition: ${transitions.base};
   font-weight: bold;
   margin: ${({ connected }) => (connected ? "-2px auto 0.7em" : "0")};
@@ -54,7 +55,7 @@ const SBlockie = styled(Blockie)`
   margin-right: 10px;
 `;
 
-const SDisconnect = styled.div<IHeaderStyle>`
+const SDisconnect = styled.div<HeaderStyle>`
   transition: ${transitions.button};
   font-size: 12px;
   font-family: monospace;
@@ -74,16 +75,16 @@ const SDisconnect = styled.div<IHeaderStyle>`
   }
 `;
 
-interface IHeaderProps {
+interface HeaderProps {
   killSession: () => void;
   connected: boolean;
   address: string;
-  chainId: number;
+  chainId: string;
 }
 
-const Header = (props: IHeaderProps) => {
+const Header = (props: HeaderProps) => {
   const { connected, address, chainId, killSession } = props;
-  const activeChain = chainId ? getChainData(chainId).name : null;
+  const activeChain = chainId ? getChainConfig(chainId).name : null;
   return (
     <SHeader {...props}>
       {activeChain && (
