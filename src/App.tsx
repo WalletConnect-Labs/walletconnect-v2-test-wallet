@@ -1,12 +1,13 @@
 import * as React from "react";
 import styled from "styled-components";
 import Store from "@pedrouid/iso-store";
+import Keyring from "mnemonic-keyring";
 import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "rpc-json-utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
 
-import { getChainAuthenticator, getChainConfig, getChainSigner, Keyring } from "./helpers";
+import { getChainAuthenticator, getChainConfig, getChainSigner } from "./helpers";
 
 import Button from "./components/Button";
 import Card from "./components/Card";
@@ -17,7 +18,7 @@ import PeerMeta from "./components/PeerMeta";
 import RequestDisplay from "./components/RequestDisplay";
 import RequestButton from "./components/RequestButton";
 import AccountDetails from "./components/AccountDetails";
-import QRCodeScanner from "./components/QRCodeScanner";
+import QRCodeScanner, { QRCodeValidateResponse } from "./components/QRCodeScanner";
 
 import logo from "./assets/walletconnect-logo.png";
 
@@ -276,7 +277,7 @@ class App extends React.Component<{}> {
   };
 
   public onQRCodeValidate = (data: string) => {
-    const res: any = { error: null, result: null };
+    const res: QRCodeValidateResponse = { error: null, result: null };
     try {
       res.result = data;
     } catch (error) {
