@@ -1,19 +1,8 @@
-import Store from "@pedrouid/iso-store";
 import { JsonRpcRequest } from "rpc-json-utils";
 import { IJsonRpcSigner } from "rpc-json-signer";
 import { IJsonRpcAuthenticator } from "rpc-json-auth";
 
 import { AppState } from "../App";
-
-export interface KeyringOptions {
-  store: Store;
-  mnemonic?: string;
-}
-
-export interface KeyPair {
-  privateKey: string;
-  publicKey: string;
-}
 
 export interface AssetMetadata {
   symbol: string;
@@ -35,6 +24,10 @@ export type ChainAuthenticator = IJsonRpcAuthenticator;
 
 export interface NamespaceConfig {
   [reference: string]: ChainConfig;
+}
+
+export interface SupportedChains {
+  [chainId: string]: ChainConfig;
 }
 
 export interface TxData {

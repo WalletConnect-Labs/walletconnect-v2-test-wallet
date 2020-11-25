@@ -1,7 +1,7 @@
 import { ChainID } from "caip";
 
 import * as blockchain from "../blockchain";
-import { ChainAuthenticator, ChainConfig, ChainSigner } from "./types";
+import { ChainAuthenticator, ChainConfig, ChainSigner, SupportedChains } from "./types";
 
 export function getChainProperty<T>(chainId: string, property: string): T {
   const { namespace, reference } = ChainID.parse(chainId);
@@ -23,4 +23,15 @@ export function getChainSigner(chainId: string): ChainSigner {
 
 export function getChainAuthenticator(chainId: string): ChainAuthenticator {
   return getChainProperty<ChainAuthenticator>(chainId, "authenticator");
+}
+
+export function getSupportedChains(): SupportedChains {
+  const chains: SupportedChains = {};
+  Object.keys(blockchain.config).forEach((namespace: string) => {
+    Object.keys(blockchain.config[namespace]).forEach((reference: string) => {
+      const chainId = ChainID.format({ namespace, reference });
+      chains[chainId] = getChainConfig(chainId);
+    });
+  });
+  return chains;
 }
