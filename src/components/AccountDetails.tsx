@@ -1,11 +1,12 @@
 import * as React from "react";
 import styled from "styled-components";
+import * as blockchain from "caip-api";
 
 import Dropdown from "./Dropdown";
 import Blockie from "./Blockie";
 
-import { ChainConfig, ellipseAddress, getViewportDimensions } from "../helpers";
 import { responsive } from "../styles";
+import { ellipseAddress, getViewportDimensions } from "src/helpers";
 
 const SSection = styled.div`
   width: 100%;
@@ -26,7 +27,7 @@ const SAddressDropdownWrapper = styled.div`
 `;
 
 interface AccountDetailsProps {
-  chains: ChainConfig[];
+  chains: blockchain.ChainConfig[];
   updateAddress?: any;
   updateChain?: any;
   accounts: string[];

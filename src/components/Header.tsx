@@ -1,9 +1,10 @@
 import * as React from "react";
 import styled from "styled-components";
+import * as blockchain from "caip-api";
 
 import Blockie from "./Blockie";
 
-import { ellipseAddress, getChainConfig } from "../helpers";
+import { ellipseAddress } from "../helpers";
 import { fonts, responsive, transitions } from "../styles";
 
 const SHeader = styled.div`
@@ -84,7 +85,7 @@ interface HeaderProps {
 
 const Header = (props: HeaderProps) => {
   const { connected, address, chainId, killSession } = props;
-  const activeChain = chainId ? getChainConfig(chainId).name : null;
+  const activeChain = chainId ? blockchain.getChainConfig(chainId).name : null;
   return (
     <SHeader {...props}>
       {activeChain && (

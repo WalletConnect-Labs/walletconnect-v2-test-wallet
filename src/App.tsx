@@ -6,8 +6,7 @@ import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "rpc-json-utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
-
-import { getChainAuthenticator, getChainConfig, getChainSigner } from "./helpers";
+import * as blockchain from "caip-api";
 
 import Button from "./components/Button";
 import Card from "./components/Card";
@@ -250,7 +249,9 @@ class App extends React.Component<{}> {
           // tslint:disable-next-line
           console.log("EVENT", "session_payload", payloadEvent.payload);
           const chainId = payloadEvent.chainId || this.state.chainId;
-          const response = await getChainAuthenticator(chainId).resolve(payloadEvent.payload);
+          const response = await blockchain
+            .getChainAuthenticator(chainId)
+            .resolve(payloadEvent.payload);
           if (typeof response !== "undefined") {
             await this.resolveRequest(payloadEvent.topic, response);
           } else {
@@ -342,7 +343,9 @@ class App extends React.Component<{}> {
         throw new Error("Payload is undefined");
       }
       const chainId = this.state.payload.chainId || this.state.chainId;
-      const response = await getChainSigner(chainId).request(this.state.payload.payload as any);
+      const response = await blockchain
+        .getChainSigner(chainId)
+        .request(this.state.payload.payload as any);
       this.state.client.resolve({
         topic: this.state.payload.topic,
         response,
@@ -403,7 +406,7 @@ class App extends React.Component<{}> {
                 ) : (
                   <Column>
                     <AccountDetails
-                      chains={[getChainConfig(chainId)]}
+                      chains={[blockchain.getChainConfig(chainId)]}
                       address={accounts[0]}
                       chainId={chainId}
                       accounts={accounts}
@@ -419,7 +422,7 @@ class App extends React.Component<{}> {
               ) : !payload ? (
                 <Column>
                   <AccountDetails
-                    chains={[getChainConfig(chainId)]}
+                    chains={[blockchain.getChainConfig(chainId)]}
                     address={accounts[0]}
                     chainId={chainId}
                     accounts={accounts}
