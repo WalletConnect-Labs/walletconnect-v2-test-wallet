@@ -32,7 +32,7 @@
     "@walletconnect/utils": "^2.0.0-alpha.2",
     "axios": "^0.20.0",
     "blockies-ts": "^1.0.0",
-    "caip-api": "^1.0.0",
+    "caip-wallet": "^1.0.0",
     "eth-sig-util": "^2.5.3",
     "ethers": "^5.0.17",
     "mnemonic-keyring": "^1.1.0",

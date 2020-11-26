@@ -6,7 +6,7 @@ import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "rpc-json-utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
-import * as blockchain from "caip-api";
+import * as blockchain from "caip-wallet";
 
 import Button from "./components/Button";
 import Card from "./components/Card";

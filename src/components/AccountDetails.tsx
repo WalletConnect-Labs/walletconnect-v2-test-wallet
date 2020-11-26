@@ -1,6 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
-import * as blockchain from "caip-api";
+import * as blockchain from "caip-wallet";
 
 import Dropdown from "./Dropdown";
 import Blockie from "./Blockie";
