@@ -1,12 +1,11 @@
 import * as React from "react";
 import styled from "styled-components";
 import Store from "@pedrouid/iso-store";
-import Keyring from "mnemonic-keyring";
+import Wallet, { getChainConfig } from "caip-wallet";
 import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "rpc-json-utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
-import * as blockchain from "caip-wallet";
 
 import Button from "./components/Button";
 import Card from "./components/Card";
@@ -20,8 +19,7 @@ import AccountDetails from "./components/AccountDetails";
 import QRCodeScanner, { QRCodeValidateResponse } from "./components/QRCodeScanner";
 
 import logo from "./assets/walletconnect-logo.png";
-
-const DEFAULT_CHAIN_ID = "eip155:1";
+import { DEFAULT_CHAINS, DEFAULT_CHAIN_ID } from "./constants";
 
 const EMPTY_METADATA = {
   name: "",
@@ -122,7 +120,7 @@ const SRequestButton = styled(RequestButton)`
 export interface AppState {
   client: Client | undefined;
   store: Store | undefined;
-  keyring: Keyring | undefined;
+  wallet: Wallet | undefined;
   proposal: SessionTypes.Proposal | undefined;
   session: SessionTypes.Created | undefined;
   loading: boolean;
@@ -138,7 +136,7 @@ export interface AppState {
 export const INITIAL_STATE: AppState = {
   client: undefined,
   store: undefined,
-  keyring: undefined,
+  wallet: undefined,
   proposal: undefined,
   session: undefined,
   loading: false,
@@ -169,9 +167,9 @@ class App extends React.Component<{}> {
     try {
       const store = new Store();
       await store.init();
-      const keyring = await Keyring.init({ store });
+      const wallet = await Wallet.init({ chainIds: DEFAULT_CHAINS, store });
       const client = await Client.init({ store });
-      this.setState({ loading: false, store, client, keyring });
+      this.setState({ loading: false, store, client, wallet });
       this.subscribeToEvents();
     } catch (e) {
       this.setState({ loading: false });
@@ -194,7 +192,7 @@ class App extends React.Component<{}> {
       state: { accountIds: this.state.accounts },
       metadata: getSessionMetadata() || EMPTY_METADATA,
     };
-    await this.state.client.respond({ approved: true, proposal: this.state.proposal, response });
+    await this.state.client.approve({ proposal: this.state.proposal, response });
     this.setState({ proposal: undefined });
   };
 
@@ -206,8 +204,7 @@ class App extends React.Component<{}> {
     if (typeof this.state.proposal === "undefined") {
       throw new Error("Proposal is undefined");
     }
-    const response = { state: { accountIds: [] }, metadata: EMPTY_METADATA };
-    await this.state.client.respond({ approved: false, proposal: this.state.proposal, response });
+    await this.state.client.reject({ proposal: this.state.proposal });
   };
 
   public killSession = () => {
@@ -246,14 +243,15 @@ class App extends React.Component<{}> {
       CLIENT_EVENTS.session.payload,
       async (payloadEvent: SessionTypes.PayloadEvent) => {
         if (isJsonRpcRequest(payloadEvent.payload)) {
+          if (typeof this.state.wallet === "undefined") {
+            throw new Error("Wallet is not initialized");
+          }
           // tslint:disable-next-line
           console.log("EVENT", "session_payload", payloadEvent.payload);
           const chainId = payloadEvent.chainId || this.state.chainId;
-          const response = await blockchain
-            .getChainAuthenticator(chainId)
-            .resolve(payloadEvent.payload);
+          const response = await this.state.wallet.resolve(payloadEvent.payload, chainId);
           if (typeof response !== "undefined") {
-            await this.resolveRequest(payloadEvent.topic, response);
+            await this.respondRequuest(payloadEvent.topic, response);
           } else {
             this.setState({ requests: [...this.state.requests, payloadEvent] });
           }
@@ -306,7 +304,7 @@ class App extends React.Component<{}> {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-    await this.state.client.respond({ approved: true, uri });
+    await this.state.client.tether({ uri });
   };
 
   public onQRCodeError = (error: Error) => {
@@ -327,11 +325,11 @@ class App extends React.Component<{}> {
     await this.setState({ requests: filteredRequests, payload: undefined });
   };
 
-  public resolveRequest = async (topic: string, response: JsonRpcResponse) => {
+  public respondRequuest = async (topic: string, response: JsonRpcResponse) => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-    await this.state.client.resolve({ topic, response });
+    await this.state.client.respond({ topic, response });
   };
 
   public approveRequest = async () => {
@@ -342,11 +340,12 @@ class App extends React.Component<{}> {
       if (typeof this.state.payload === "undefined") {
         throw new Error("Payload is undefined");
       }
+      if (typeof this.state.wallet === "undefined") {
+        throw new Error("Wallet is not initialized");
+      }
       const chainId = this.state.payload.chainId || this.state.chainId;
-      const response = await blockchain
-        .getChainSigner(chainId)
-        .request(this.state.payload.payload as any);
-      this.state.client.resolve({
+      const response = await this.state.wallet.resolve(this.state.payload.payload as any, chainId);
+      this.state.client.respond({
         topic: this.state.payload.topic,
         response,
       });
@@ -355,7 +354,7 @@ class App extends React.Component<{}> {
       if (typeof this.state.payload === "undefined") {
         throw new Error("Payload is undefined");
       }
-      this.state.client.resolve({
+      this.state.client.respond({
         topic: this.state.payload.topic,
         response: formatJsonRpcError(this.state.payload.payload.id, "Failed or Rejected Request"),
       });
@@ -371,7 +370,7 @@ class App extends React.Component<{}> {
     if (typeof this.state.payload === "undefined") {
       throw new Error("Payload is undefined");
     }
-    this.state.client.resolve({
+    this.state.client.respond({
       topic: this.state.payload.topic,
       response: formatJsonRpcError(this.state.payload.payload.id, "Failed or Rejected Request"),
     });
@@ -406,7 +405,7 @@ class App extends React.Component<{}> {
                 ) : (
                   <Column>
                     <AccountDetails
-                      chains={[blockchain.getChainConfig(chainId)]}
+                      chains={[getChainConfig(chainId)]}
                       address={accounts[0]}
                       chainId={chainId}
                       accounts={accounts}
@@ -422,7 +421,7 @@ class App extends React.Component<{}> {
               ) : !payload ? (
                 <Column>
                   <AccountDetails
-                    chains={[blockchain.getChainConfig(chainId)]}
+                    chains={[getChainConfig(chainId)]}
                     address={accounts[0]}
                     chainId={chainId}
                     accounts={accounts}
