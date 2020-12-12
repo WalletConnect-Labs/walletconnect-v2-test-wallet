@@ -1,6 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
-import * as blockchain from "caip-wallet";
+import { getSupportedChains } from "caip-wallet";
 
 import Blockie from "./Blockie";
 
@@ -79,19 +79,20 @@ const SDisconnect = styled.div<HeaderStyle>`
 interface HeaderProps {
   killSession: () => void;
   connected: boolean;
-  address: string;
+  accounts: string[];
   chainId: string;
 }
 
 const Header = (props: HeaderProps) => {
-  const { connected, address, chainId, killSession } = props;
-  const activeChain = chainId ? blockchain.getChainConfig(chainId).name : null;
+  const { killSession, connected, accounts, chainId } = props;
+  const chainName = chainId ? getSupportedChains()[chainId].name : undefined;
+  const address = accounts.length ? accounts[0].split("@")[0] : undefined;
   return (
     <SHeader {...props}>
-      {activeChain && (
+      {chainName && (
         <SActiveChain>
           <p>{`Connected to`}</p>
-          <p>{activeChain}</p>
+          <p>{chainName}</p>
         </SActiveChain>
       )}
       {address && (

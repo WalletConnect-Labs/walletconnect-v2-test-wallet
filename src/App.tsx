@@ -1,7 +1,7 @@
 import * as React from "react";
 import styled from "styled-components";
 import Store from "@pedrouid/iso-store";
-import Wallet, { getChainConfig } from "caip-wallet";
+import Wallet from "caip-wallet";
 import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "rpc-json-utils";
 import { getSessionMetadata } from "@walletconnect/utils";
@@ -19,7 +19,8 @@ import AccountDetails from "./components/AccountDetails";
 import QRCodeScanner, { QRCodeValidateResponse } from "./components/QRCodeScanner";
 
 import logo from "./assets/walletconnect-logo.png";
-import { DEFAULT_CHAINS, DEFAULT_CHAIN_ID } from "./constants";
+import { DEFAULT_CHAINS, DEFAULT_CHAIN_ID, DEFAULT_RELAY_PROVIDER } from "./constants";
+import { Logger } from "./helpers/logger";
 
 const EMPTY_METADATA = {
   name: "",
@@ -168,8 +169,13 @@ class App extends React.Component<{}> {
       const store = new Store();
       await store.init();
       const wallet = await Wallet.init({ chainIds: DEFAULT_CHAINS, store });
-      const client = await Client.init({ store });
-      this.setState({ loading: false, store, client, wallet });
+      const client = await Client.init({
+        relayProvider: DEFAULT_RELAY_PROVIDER,
+        logger: new Logger(),
+        store,
+      });
+      const accounts = await wallet.getAccountIds(this.state.chainId);
+      this.setState({ loading: false, store, client, wallet, accounts });
       this.subscribeToEvents();
     } catch (e) {
       this.setState({ loading: false });
@@ -383,10 +389,10 @@ class App extends React.Component<{}> {
       <React.Fragment>
         <SContainer>
           <Header
-            connected={connected}
-            address={accounts[0]}
-            chainId={chainId}
             killSession={this.killSession}
+            connected={connected}
+            chainId={chainId}
+            accounts={accounts}
           />
           <SContent>
             <Card maxWidth={400}>
@@ -404,13 +410,7 @@ class App extends React.Component<{}> {
                   </Column>
                 ) : (
                   <Column>
-                    <AccountDetails
-                      chains={[getChainConfig(chainId)]}
-                      address={accounts[0]}
-                      chainId={chainId}
-                      accounts={accounts}
-                      activeIndex={0}
-                    />
+                    <AccountDetails chainId={chainId} accounts={accounts} />
                     <SActionsColumn>
                       <SButton onClick={this.toggleScanner}>{`Scan`}</SButton>
                       <p>{"OR"}</p>
@@ -420,13 +420,7 @@ class App extends React.Component<{}> {
                 )
               ) : !payload ? (
                 <Column>
-                  <AccountDetails
-                    chains={[getChainConfig(chainId)]}
-                    address={accounts[0]}
-                    chainId={chainId}
-                    accounts={accounts}
-                    activeIndex={0}
-                  />
+                  <AccountDetails chainId={chainId} accounts={accounts} />
                   {session && session.peer ? (
                     <>
                       <h6>{"Connected to"}</h6>
@@ -477,7 +471,7 @@ class App extends React.Component<{}> {
             />
           )}
         </SContainer>
-        <SVersionNumber>{`v${process.env.REACT_APP_VERSION}`} </SVersionNumber>
+        <SVersionNumber>{`v${process.env.REACT_APP_VERSION || "2.0.0-alpha"}`} </SVersionNumber>
       </React.Fragment>
     );
   }
