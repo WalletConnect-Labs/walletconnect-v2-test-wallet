@@ -20,7 +20,6 @@ import QRCodeScanner, { QRCodeValidateResponse } from "./components/QRCodeScanne
 
 import logo from "./assets/walletconnect-logo.png";
 import { DEFAULT_CHAINS, DEFAULT_CHAIN_ID, DEFAULT_RELAY_PROVIDER } from "./constants";
-import { Logger } from "./helpers/logger";
 
 const EMPTY_METADATA = {
   name: "",
@@ -171,7 +170,7 @@ class App extends React.Component<{}> {
       const wallet = await Wallet.init({ chainIds: DEFAULT_CHAINS, store });
       const client = await Client.init({
         relayProvider: DEFAULT_RELAY_PROVIDER,
-        logger: new Logger(),
+        logger: "debug",
         store,
       });
       const accounts = await wallet.getAccountIds(this.state.chainId);

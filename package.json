@@ -1,6 +1,6 @@
 {
   "name": "walletconnect-v2-test-wallet",
-  "version": "2.0.0-alpha.7",
+  "version": "2.0.0-alpha.9",
   "private": true,
   "keywords": [
     "walletconnect",
@@ -27,9 +27,9 @@
   },
   "dependencies": {
     "@pedrouid/iso-store": "^1.0.5",
-    "@walletconnect/client": "^2.0.0-alpha.7",
-    "@walletconnect/types": "^2.0.0-alpha.7",
-    "@walletconnect/utils": "^2.0.0-alpha.7",
+    "@walletconnect/client": "^2.0.0-alpha.9",
+    "@walletconnect/types": "^2.0.0-alpha.9",
+    "@walletconnect/utils": "^2.0.0-alpha.9",
     "axios": "^0.20.0",
     "blockies-ts": "^1.0.0",
     "caip-wallet": "^1.2.1",
