@@ -211,8 +211,8 @@ class App extends React.Component<{}> {
     await this.state.client.reject({ proposal: this.state.proposal });
   };
 
-  public killSession = () => {
-    console.log("ACTION", "killSession");
+  public disconnect = () => {
+    console.log("ACTION", "disconnect");
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
@@ -387,7 +387,7 @@ class App extends React.Component<{}> {
       <React.Fragment>
         <SContainer>
           <Header
-            killSession={this.killSession}
+            disconnect={this.disconnect}
             connected={connected}
             chainId={chainId}
             accounts={accounts}
