@@ -253,11 +253,15 @@ class App extends React.Component<{}> {
           // tslint:disable-next-line
           console.log("EVENT", "session_payload", payloadEvent.payload);
           const chainId = payloadEvent.chainId || this.state.chainId;
-          const response = await this.state.wallet.resolve(payloadEvent.payload, chainId);
-          if (typeof response !== "undefined") {
-            await this.respondRequuest(payloadEvent.topic, response);
-          } else {
+          // TODO: this needs improvement on caip-wallet side
+          const requiresApproval = this.state.wallet.chains[
+            chainId
+          ].config.requiredApproval.includes(payloadEvent.payload.method);
+          if (requiresApproval) {
             this.setState({ requests: [...this.state.requests, payloadEvent] });
+          } else {
+            const response = await this.state.wallet.resolve(payloadEvent.payload, chainId);
+            await this.respondRequest(payloadEvent.topic, response);
           }
         }
       },
@@ -329,7 +333,7 @@ class App extends React.Component<{}> {
     await this.setState({ requests: filteredRequests, payload: undefined });
   };
 
-  public respondRequuest = async (topic: string, response: JsonRpcResponse) => {
+  public respondRequest = async (topic: string, response: JsonRpcResponse) => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
