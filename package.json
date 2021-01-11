@@ -1,6 +1,6 @@
 {
   "name": "walletconnect-v2-test-wallet",
-  "version": "2.0.0-alpha.9",
+  "version": "2.0.0-alpha.16",
   "private": true,
   "keywords": [
     "walletconnect",
@@ -26,21 +26,19 @@
     "url": "https://github.com/walletconnect-labs/walletconnect-v2-test-wallet/issues"
   },
   "dependencies": {
-    "@pedrouid/iso-store": "^1.0.5",
-    "@walletconnect/client": "^2.0.0-alpha.9",
-    "@walletconnect/types": "^2.0.0-alpha.9",
-    "@walletconnect/utils": "^2.0.0-alpha.9",
-    "axios": "^0.20.0",
+    "@json-rpc-tools/utils": "^1.5.6",
+    "@walletconnect/client": "^2.0.0-alpha.16",
+    "@walletconnect/types": "^2.0.0-alpha.16",
+    "@walletconnect/utils": "^2.0.0-alpha.16",
+    "axios": "^0.21.1",
     "blockies-ts": "^1.0.0",
-    "caip-wallet": "^1.2.1",
+    "caip-wallet": "^1.3.1",
+    "keyvaluestorage": "^0.6.0",
     "prop-types": "^15.7.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-qr-reader": "^2.2.1",
     "react-scripts-ts": "^4.0.8",
-    "rpc-json-auth": "^0.2.1",
-    "rpc-json-signer": "^1.0.0",
-    "rpc-json-utils": "^1.1.4",
     "styled-components": "^5.2.0"
   },
   "devDependencies": {

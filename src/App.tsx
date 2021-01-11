@@ -1,9 +1,9 @@
 import * as React from "react";
 import styled from "styled-components";
-import Store from "@pedrouid/iso-store";
+import KeyValueStorage from "keyvaluestorage";
 import Wallet from "caip-wallet";
 import Client, { CLIENT_EVENTS } from "@walletconnect/client";
-import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "rpc-json-utils";
+import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "@json-rpc-tools/utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
 
@@ -119,7 +119,7 @@ const SRequestButton = styled(RequestButton)`
 
 export interface AppState {
   client: Client | undefined;
-  store: Store | undefined;
+  storage: KeyValueStorage | undefined;
   wallet: Wallet | undefined;
   proposal: SessionTypes.Proposal | undefined;
   session: SessionTypes.Created | undefined;
@@ -135,7 +135,7 @@ export interface AppState {
 
 export const INITIAL_STATE: AppState = {
   client: undefined,
-  store: undefined,
+  storage: undefined,
   wallet: undefined,
   proposal: undefined,
   session: undefined,
@@ -165,16 +165,15 @@ class App extends React.Component<{}> {
   public init = async () => {
     this.setState({ loading: true });
     try {
-      const store = new Store();
-      await store.init();
-      const wallet = await Wallet.init({ chainIds: DEFAULT_CHAINS, store });
+      const storage = new KeyValueStorage();
+      const wallet = await Wallet.init({ chainIds: DEFAULT_CHAINS, storage });
       const client = await Client.init({
         relayProvider: DEFAULT_RELAY_PROVIDER,
         logger: "debug",
-        store,
+        storage,
       });
       const accounts = await wallet.getAccountIds(this.state.chainId);
-      this.setState({ loading: false, store, client, wallet, accounts });
+      this.setState({ loading: false, storage, client, wallet, accounts });
       this.subscribeToEvents();
     } catch (e) {
       this.setState({ loading: false });
@@ -309,7 +308,7 @@ class App extends React.Component<{}> {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-    await this.state.client.tether({ uri });
+    await this.state.client.pair({ uri });
   };
 
   public onQRCodeError = (error: Error) => {
