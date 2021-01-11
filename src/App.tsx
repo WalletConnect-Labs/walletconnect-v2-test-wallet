@@ -253,14 +253,17 @@ class App extends React.Component<{}> {
           // tslint:disable-next-line
           console.log("EVENT", "session_payload", payloadEvent.payload);
           const chainId = payloadEvent.chainId || this.state.chainId;
-          // TODO: this needs improvement on caip-wallet side
-          const requiresApproval = this.state.wallet.chains[
-            chainId
-          ].config.requiredApproval.includes(payloadEvent.payload.method);
-          if (requiresApproval) {
-            this.setState({ requests: [...this.state.requests, payloadEvent] });
-          } else {
-            const response = await this.state.wallet.resolve(payloadEvent.payload, chainId);
+          try {
+            // TODO: needs improvement
+            const requiresApproval = this.state.wallet.chains[chainId].assert(payloadEvent.payload);
+            if (requiresApproval) {
+              this.setState({ requests: [...this.state.requests, payloadEvent] });
+            } else {
+              const response = await this.state.wallet.resolve(payloadEvent.payload, chainId);
+              await this.respondRequest(payloadEvent.topic, response);
+            }
+          } catch (e) {
+            const response = formatJsonRpcError(payloadEvent.payload.id, e.message);
             await this.respondRequest(payloadEvent.topic, response);
           }
         }
