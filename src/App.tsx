@@ -192,12 +192,13 @@ class App extends React.Component<{}> {
     if (typeof this.state.accounts === "undefined") {
       throw new Error("Accounts is undefined");
     }
+    const metadata = getSessionMetadata() || EMPTY_METADATA;
     const response = {
       state: { accountIds: this.state.accounts },
-      metadata: getSessionMetadata() || EMPTY_METADATA,
+      metadata: { ...metadata, description: "Test Wallet for WalletConnect" },
     };
-    await this.state.client.approve({ proposal: this.state.proposal, response });
-    this.setState({ proposal: undefined });
+    const session = await this.state.client.approve({ proposal: this.state.proposal, response });
+    this.setState({ proposal: undefined, session });
   };
 
   public rejectSession = async () => {
@@ -355,7 +356,7 @@ class App extends React.Component<{}> {
         throw new Error("Wallet is not initialized");
       }
       const chainId = this.state.payload.chainId || this.state.chainId;
-      const response = await this.state.wallet.resolve(this.state.payload.payload as any, chainId);
+      const response = await this.state.wallet.approve(this.state.payload.payload as any, chainId);
       this.state.client.respond({
         topic: this.state.payload.topic,
         response,
@@ -389,7 +390,16 @@ class App extends React.Component<{}> {
   };
 
   public render() {
-    const { scanner, connected, accounts, session, chainId, requests, payload } = this.state;
+    const {
+      scanner,
+      connected,
+      accounts,
+      session,
+      proposal,
+      chainId,
+      requests,
+      payload,
+    } = this.state;
     return (
       <React.Fragment>
         <SContainer>
@@ -405,9 +415,9 @@ class App extends React.Component<{}> {
                 <img src={logo} alt={"WalletConnect"} />
               </SLogo>
               {!connected ? (
-                session && session.peer ? (
+                proposal ? (
                   <Column>
-                    <PeerMeta peerMeta={session.peer.metadata} />
+                    <PeerMeta peerMeta={proposal.proposer.metadata} />
                     <SActions>
                       <Button onClick={this.approveSession}>{`Approve`}</Button>
                       <Button onClick={this.rejectSession}>{`Reject`}</Button>
@@ -458,9 +468,9 @@ class App extends React.Component<{}> {
                 </Column>
               ) : (
                 <RequestDisplay
-                  payload={payload}
+                  chainId={payload.chainId || this.state.chainId}
+                  request={payload.payload}
                   peerMeta={session?.peer.metadata || EMPTY_METADATA}
-                  renderPayload={(payload: any) => payload}
                   approveRequest={this.approveRequest}
                   rejectRequest={this.rejectRequest}
                 />

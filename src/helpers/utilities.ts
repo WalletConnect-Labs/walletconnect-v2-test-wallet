@@ -1,3 +1,5 @@
+import * as encUtils from "enc-utils";
+
 export function capitalize(string: string): string {
   return string
     .split(" ")
@@ -74,4 +76,20 @@ export function getViewportDimensions() {
   const y = w.innerHeight || e.clientHeight || g.clientHeight;
 
   return { x, y };
+}
+
+export function convertHexToNumber(hex: string) {
+  try {
+    return encUtils.hexToNumber(hex);
+  } catch (e) {
+    return hex;
+  }
+}
+
+export function convertHexToUtf8(hex: string) {
+  try {
+    return encUtils.hexToUtf8(hex);
+  } catch (e) {
+    return hex;
+  }
 }

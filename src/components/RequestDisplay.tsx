@@ -4,7 +4,7 @@ import styled from "styled-components";
 import Column from "./Column";
 import Button from "./Button";
 
-import { RequestRenderParams } from "../helpers";
+import { renderRequest } from "src/render";
 
 const SRequestValues = styled.div`
   font-family: monospace;
@@ -42,11 +42,11 @@ const SActions = styled.div`
 
 class RequestDisplay extends React.Component<any, any> {
   public render() {
-    const { payload, peerMeta, approveRequest, rejectRequest, renderPayload } = this.props;
+    const { chainId, request, peerMeta, approveRequest, rejectRequest } = this.props;
 
-    const params: RequestRenderParams[] = renderPayload(payload);
-    console.log("RENDER", "method", payload.method);
-    console.log("RENDER", "params", payload.params);
+    const params = renderRequest(request, chainId);
+    console.log("RENDER", "method", request.method);
+    console.log("RENDER", "params", request.params);
     console.log("RENDER", "formatted", params);
     return (
       <Column>
