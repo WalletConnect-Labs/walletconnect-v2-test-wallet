@@ -166,13 +166,13 @@ class App extends React.Component<{}> {
     this.setState({ loading: true });
     try {
       const storage = new KeyValueStorage();
-      const wallet = await Wallet.init({ chainIds: DEFAULT_CHAINS, storage });
+      const wallet = await Wallet.init({ chains: DEFAULT_CHAINS, storage });
       const client = await Client.init({
         relayProvider: DEFAULT_RELAY_PROVIDER,
         logger: "debug",
         storage,
       });
-      const accounts = await wallet.getAccountIds(this.state.chainId);
+      const accounts = await wallet.getAccounts(this.state.chainId);
       this.setState({ loading: false, storage, client, wallet, accounts });
       this.subscribeToEvents();
     } catch (e) {
@@ -194,7 +194,7 @@ class App extends React.Component<{}> {
     }
     const metadata = getSessionMetadata() || EMPTY_METADATA;
     const response = {
-      state: { accountIds: this.state.accounts },
+      state: { accounts: this.state.accounts },
       metadata: { ...metadata, description: "Test Wallet for WalletConnect" },
     };
     const session = await this.state.client.approve({ proposal: this.state.proposal, response });
@@ -256,7 +256,7 @@ class App extends React.Component<{}> {
           const chainId = payloadEvent.chainId || this.state.chainId;
           try {
             // TODO: needs improvement
-            const requiresApproval = this.state.wallet.chains[chainId].assert(payloadEvent.payload);
+            const requiresApproval = this.state.wallet.auth[chainId].assert(payloadEvent.payload);
             if (requiresApproval) {
               this.setState({ requests: [...this.state.requests, payloadEvent] });
             } else {
