@@ -1,4 +1,4 @@
-export const colors = {
+export const colors: Record<string, string> = {
   defaultColor: "12, 12, 13",
   backgroundColor: "40, 44, 52",
   white: "255, 255, 255",

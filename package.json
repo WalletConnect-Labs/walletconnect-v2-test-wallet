@@ -1,6 +1,6 @@
 {
   "name": "walletconnect-v2-test-wallet",
-  "version": "2.0.0-alpha.18",
+  "version": "2.0.0-alpha.19",
   "private": true,
   "keywords": [
     "walletconnect",
@@ -9,14 +9,12 @@
     "crypto"
   ],
   "author": "WalletConnect Labs <walletconnectlabs.com>",
-  "homepage": "https://github.com/walletconnect-labs/walletconnect-v2-test-wallet/",
   "license": "LGPL-3.0",
   "scripts": {
-    "start": "react-scripts-ts start",
-    "build": "react-scripts-ts build",
-    "test": "react-scripts-ts test --env=jsdom",
-    "eject": "react-scripts-ts eject",
-    "lint": "eslint -c './.eslintrc' --fix './src/**/*{.ts,.tsx}'"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "repository": {
     "type": "git",
@@ -27,45 +25,48 @@
   },
   "dependencies": {
     "@json-rpc-tools/utils": "^1.5.7",
-    "@walletconnect/client": "^2.0.0-alpha.18",
-    "@walletconnect/types": "^2.0.0-alpha.18",
-    "@walletconnect/utils": "^2.0.0-alpha.18",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "@types/jest": "^26.0.15",
+    "@types/node": "^12.0.0",
+    "@types/prop-types": "^15.7.3",
+    "@types/react": "^16.9.53",
+    "@types/react-dom": "^16.9.8",
+    "@types/react-qr-reader": "^2.1.3",
+    "@types/styled-components": "^5.1.2",
+    "@walletconnect/client": "^2.0.0-alpha.19",
+    "@walletconnect/types": "^2.0.0-alpha.19",
+    "@walletconnect/utils": "^2.0.0-alpha.19",
     "axios": "^0.21.1",
     "blockies-ts": "^1.0.0",
     "caip-wallet": "^1.4.0",
     "keyvaluestorage": "^0.6.0",
     "prop-types": "^15.7.2",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "react-qr-reader": "^2.2.1",
-    "react-scripts-ts": "^4.0.8",
-    "styled-components": "^5.2.0"
+    "react-scripts": "4.0.1",
+    "styled-components": "^5.2.0",
+    "typescript": "^4.0.3",
+    "web-vitals": "^0.2.4"
   },
-  "devDependencies": {
-    "@types/jest": "^24.0.25",
-    "@types/node": "^13.1.6",
-    "@types/prop-types": "^15.7.3",
-    "@types/react": "^16.9.51",
-    "@types/react-dom": "^16.9.4",
-    "@types/react-qr-reader": "^2.1.2",
-    "@types/styled-components": "^5.1.2",
-    "@typescript-eslint/eslint-plugin": "^2.20.0",
-    "@typescript-eslint/parser": "^2.20.0",
-    "eslint-config-prettier": "^6.12.0",
-    "eslint-config-react": "^1.1.7",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.0.0",
-    "eslint-plugin-prettier": "^3.1.2",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "prettier": "^1.19.1",
-    "typescript": "^3.9.7"
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
 }

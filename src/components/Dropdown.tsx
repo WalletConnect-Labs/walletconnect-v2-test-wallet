@@ -63,7 +63,7 @@ interface DropdownState {
 
 interface DropdownProps {
   selected: number | string;
-  options: any[] | object;
+  options: any[] | any;
   displayKey: number | string;
   targetKey: number | string;
   disabled?: boolean;
@@ -96,7 +96,7 @@ class Dropdown extends React.Component<DropdownProps, DropdownState> {
     selected: number | string;
   }) => {
     const { targetKey, options, selected } = props;
-    let optionsDict = {};
+    let optionsDict: any = {};
     let otherKeys: any[] = [];
     if (Array.isArray(options)) {
       if (!targetKey) {
@@ -143,7 +143,7 @@ class Dropdown extends React.Component<DropdownProps, DropdownState> {
       <ClickOutside onClickOutside={this.onClickOutside}>
         <SDropdown monospace={!!monospace} disabled={disabled || !otherKeys.length}>
           <SRow selected={true} show={show} onClick={this.toggleDropdown}>
-            {optionsDict[selected][displayKey]}
+            {(optionsDict as any)[selected][displayKey]}
           </SRow>
           {!!otherKeys.length && (
             <SAbsolute show={show}>

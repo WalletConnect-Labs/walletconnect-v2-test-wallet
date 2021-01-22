@@ -1,21 +1,19 @@
-# walletconnect-v2-test-wallet
-
-Test Wallet for WalletConnect 2.0 Protocol (Browser)
+# WalletConnect Test Wallet
 
 ## Develop
 
 ```bash
-npm run start
+yarn start
 ```
 
 ## Test
 
 ```bash
-npm run test
+yarn test
 ```
 
 ## Build
 
 ```bash
-npm run build
+yarn build
 ```

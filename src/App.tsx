@@ -217,12 +217,11 @@ class App extends React.Component<{}> {
       topic: this.state.session.topic,
       reason: "User disconnected session",
     });
-    this.resetApp();
   };
 
   public resetApp = async () => {
-    await this.setState({ ...INITIAL_STATE });
-    this.init();
+    const { storage, client, wallet, accounts } = this.state;
+    this.setState({ ...INITIAL_STATE, storage, client, wallet, accounts });
   };
 
   public subscribeToEvents = () => {
@@ -335,9 +334,9 @@ class App extends React.Component<{}> {
       throw new Error("Payload is undefined");
     }
     const filteredRequests = this.state.requests.filter(
-      request => request.payload.id !== this.state.payload?.payload.id,
+      (request) => request.payload.id !== this.state.payload?.payload.id,
     );
-    await this.setState({ requests: filteredRequests, payload: undefined });
+    this.setState({ requests: filteredRequests, payload: undefined });
   };
 
   public respondRequest = async (topic: string, response: JsonRpcResponse) => {
@@ -453,7 +452,7 @@ class App extends React.Component<{}> {
                   ) : null}
                   <h6>{"Pending Call Requests"}</h6>
                   {requests.length ? (
-                    requests.map(request => (
+                    requests.map((request) => (
                       <SRequestButton
                         key={request.payload.id}
                         onClick={() => this.openRequest(request)}

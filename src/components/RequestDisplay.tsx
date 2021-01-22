@@ -4,7 +4,7 @@ import styled from "styled-components";
 import Column from "./Column";
 import Button from "./Button";
 
-import { renderRequest } from "src/render";
+import { renderRequest } from "../render";
 
 const SRequestValues = styled.div`
   font-family: monospace;
@@ -55,7 +55,7 @@ class RequestDisplay extends React.Component<any, any> {
           <img src={peerMeta.icons[0]} alt={peerMeta.name} />
           <div>{peerMeta.name}</div>
         </SConnectedPeer>
-        {params.map(param => (
+        {params.map((param) => (
           <React.Fragment key={param.label}>
             <h6>{param.label}</h6>
             <SRequestValues>{param.value}</SRequestValues>

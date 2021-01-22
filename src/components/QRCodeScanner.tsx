@@ -77,7 +77,7 @@ class QRCodeScanner extends React.Component<QRCodeScannerProps, QRCodeScannerSta
     await this.setState({ delay: false });
   };
 
-  public handleScan = (data: string) => {
+  public handleScan = (data: string | null) => {
     if (data) {
       const { result, error } = this.props.onValidate(data);
       if (result) {

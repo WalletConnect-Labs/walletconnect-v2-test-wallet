@@ -10,7 +10,7 @@ class ClickOutside extends React.Component<ClickOutsideProps> {
     onClickOutside: PropTypes.func.isRequired,
   };
 
-  private element: HTMLDivElement | null;
+  private element: HTMLDivElement | null = null;
   private isTouch = false;
 
   public componentDidMount() {
@@ -42,7 +42,7 @@ class ClickOutside extends React.Component<ClickOutsideProps> {
   public render() {
     const { children, onClickOutside, ...props } = this.props;
     return (
-      <div {...props} ref={c => (this.element = c)}>
+      <div {...props} ref={(c) => (this.element = c)}>
         {children}
       </div>
     );
