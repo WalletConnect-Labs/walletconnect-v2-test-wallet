@@ -1,6 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
-import { getSupportedChains } from "caip-wallet";
+import { getChainConfig } from "caip-wallet";
 
 // import Dropdown from "./Dropdown";
 import Blockie from "./Blockie";
@@ -28,23 +28,19 @@ const SAddressDropdownWrapper = styled.div`
 
 interface AccountDetailsProps {
   accounts: string[];
-  chainId: string;
+  chains: string[];
   updateAddress?: any;
   updateChain?: any;
 }
 
 const AccountDetails = (props: AccountDetailsProps) => {
-  const { accounts, chainId } = props;
+  const { accounts, chains } = props;
   const windowWidth = getViewportDimensions().x;
   const maxWidth = 468;
   const maxChar = 12;
   const ellipseLength =
     windowWidth > maxWidth ? maxChar : Math.floor(windowWidth * (maxChar / maxWidth));
-  // const accountsMap = accounts.map((addr: string, index: number) => ({
-  //   index,
-  //   display_address: ellipseAddress(addr, ellipseLength),
-  // }));
-  const chainName = chainId ? getSupportedChains()[chainId].name : undefined;
+  const chainNames = chains.map((chainId) => getChainConfig(chainId)?.name);
   const address = accounts.length ? accounts[0].split("@")[0] : undefined;
   return (
     <React.Fragment>
@@ -65,8 +61,10 @@ const AccountDetails = (props: AccountDetailsProps) => {
         </SAddressDropdownWrapper>
       </SSection>
       <SSection>
-        <h6>{"Chain"}</h6>
-        <p>{chainName}</p>
+        <h6>{"Chains"}</h6>
+        {chainNames.map((chainName) => (
+          <p key={chainName}>{chainName}</p>
+        ))}
         {/* <Dropdown
           selected={chainId}
           options={chains}

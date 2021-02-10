@@ -5,6 +5,7 @@ import Column from "./Column";
 import Button from "./Button";
 
 import { renderRequest } from "../render";
+import { getChainConfig } from "caip-wallet";
 
 const SRequestValues = styled.div`
   font-family: monospace;
@@ -48,6 +49,8 @@ class RequestDisplay extends React.Component<any, any> {
     console.log("RENDER", "method", request.method);
     console.log("RENDER", "params", request.params);
     console.log("RENDER", "formatted", params);
+    const chainName = chainId ? getChainConfig(chainId).name : undefined;
+
     return (
       <Column>
         <h6>{"Request From"}</h6>
@@ -55,6 +58,8 @@ class RequestDisplay extends React.Component<any, any> {
           <img src={peerMeta.icons[0]} alt={peerMeta.name} />
           <div>{peerMeta.name}</div>
         </SConnectedPeer>
+        <h6>{"Chain"}</h6>
+        <p>{chainName}</p>
         {params.map((param) => (
           <React.Fragment key={param.label}>
             <h6>{param.label}</h6>

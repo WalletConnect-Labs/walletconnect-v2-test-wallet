@@ -1,7 +1,7 @@
 import * as React from "react";
 import styled from "styled-components";
 import KeyValueStorage from "keyvaluestorage";
-import Wallet from "caip-wallet";
+import Wallet, { getChainConfig } from "caip-wallet";
 import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "@json-rpc-tools/utils";
 import { getSessionMetadata } from "@walletconnect/utils";
@@ -19,7 +19,12 @@ import AccountDetails from "./components/AccountDetails";
 import QRCodeScanner, { QRCodeValidateResponse } from "./components/QRCodeScanner";
 
 import logo from "./assets/walletconnect-logo.png";
-import { DEFAULT_APP_METADATA, DEFAULT_CHAINS, DEFAULT_RELAY_PROVIDER } from "./constants";
+import {
+  DEFAULT_APP_METADATA,
+  DEFAULT_CHAINS,
+  DEFAULT_METHODS,
+  DEFAULT_RELAY_PROVIDER,
+} from "./constants";
 
 const SContainer = styled.div`
   display: flex;
@@ -186,8 +191,12 @@ class App extends React.Component<{}> {
     if (typeof this.state.accounts === "undefined") {
       throw new Error("Accounts is undefined");
     }
+    const accounts = this.state.accounts.filter((account) => {
+      const chainId = account.split("@")[1];
+      return this.state.proposal?.permissions.blockchain.chains.includes(chainId);
+    });
     const response = {
-      state: { accounts: this.state.accounts },
+      state: { accounts },
       metadata: getSessionMetadata() || DEFAULT_APP_METADATA,
     };
     const session = await this.state.client.approve({ proposal: this.state.proposal, response });
@@ -203,6 +212,7 @@ class App extends React.Component<{}> {
       throw new Error("Proposal is undefined");
     }
     await this.state.client.reject({ proposal: this.state.proposal });
+    this.setState({ proposal: undefined });
   };
 
   public disconnect = async () => {
@@ -232,7 +242,26 @@ class App extends React.Component<{}> {
     }
 
     this.state.client.on(CLIENT_EVENTS.session.proposal, (proposal: SessionTypes.Proposal) => {
+      if (typeof this.state.client === "undefined") {
+        throw new Error("WalletConnect is not initialized");
+      }
       console.log("EVENT", "session_proposal");
+      const unsupportedChains = [];
+      proposal.permissions.blockchain.chains.forEach((chainId) => {
+        if (this.state.chains.includes(chainId)) return;
+        unsupportedChains.push(chainId);
+      });
+      if (unsupportedChains.length) {
+        return this.state.client.reject({ proposal });
+      }
+      const unsupportedMethods = [];
+      proposal.permissions.jsonrpc.methods.forEach((method) => {
+        if (DEFAULT_METHODS.includes(method)) return;
+        unsupportedMethods.push(method);
+      });
+      if (unsupportedMethods.length) {
+        return this.state.client.reject({ proposal });
+      }
       this.setState({ proposal });
     });
 
@@ -420,6 +449,14 @@ class App extends React.Component<{}> {
                 proposal ? (
                   <Column>
                     <PeerMeta peerMeta={proposal.proposer.metadata} />
+                    <h5>Chains</h5>
+                    {proposal.permissions.blockchain.chains.map((chainId) => (
+                      <p key={`proposal:chainId:${chainId}`}>{getChainConfig(chainId).name}</p>
+                    ))}
+                    <h5>Methods</h5>
+                    {proposal.permissions.jsonrpc.methods.map((method) => (
+                      <p key={`proposal:method:${method}`}>{method}</p>
+                    ))}
                     <SActions>
                       <Button onClick={this.approveSession}>{`Approve`}</Button>
                       <Button onClick={this.rejectSession}>{`Reject`}</Button>
@@ -427,7 +464,7 @@ class App extends React.Component<{}> {
                   </Column>
                 ) : (
                   <Column>
-                    <AccountDetails chainId={chains[0]} accounts={accounts} />
+                    <AccountDetails chains={chains} accounts={accounts} />
                     <SActionsColumn>
                       <SButton onClick={this.toggleScanner}>{`Scan`}</SButton>
                       <p>{"OR"}</p>
@@ -437,7 +474,7 @@ class App extends React.Component<{}> {
                 )
               ) : !payload ? (
                 <Column>
-                  <AccountDetails chainId={chains[0]} accounts={accounts} />
+                  <AccountDetails chains={chains} accounts={accounts} />
                   {session && session.peer ? (
                     <>
                       <h6>{"Connected to"}</h6>

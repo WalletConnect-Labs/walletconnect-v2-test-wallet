@@ -1,8 +1,11 @@
-import { ETHEREUM_MAINNET_CHAIN_ID } from "./ethereum";
+import { config } from "caip-api";
+import { jsonrpc } from "caip-wallet";
 
-export const DEFAULT_CHAINS = [ETHEREUM_MAINNET_CHAIN_ID];
+export const DEFAULT_CHAINS = Object.keys(config.eip155).map((ref) => `eip155:${ref}`);
 
 export const DEFAULT_RELAY_PROVIDER = "wss://staging.walletconnect.org";
+
+export const DEFAULT_METHODS = jsonrpc.eip155.wallet.auth;
 
 export const DEFAULT_APP_METADATA = {
   name: "Test Wallet",

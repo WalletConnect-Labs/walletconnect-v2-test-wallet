@@ -1,6 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
-import { getSupportedChains } from "caip-wallet";
+import { getChainConfig } from "caip-wallet";
 
 import Blockie from "./Blockie";
 
@@ -85,7 +85,7 @@ interface HeaderProps {
 
 const Header = (props: HeaderProps) => {
   const { disconnect, connected, accounts, chainId } = props;
-  const chainName = chainId ? getSupportedChains()[chainId].name : undefined;
+  const chainName = chainId ? getChainConfig(chainId).name : undefined;
   const address = accounts.length ? accounts[0].split("@")[0] : undefined;
   return (
     <SHeader {...props}>
