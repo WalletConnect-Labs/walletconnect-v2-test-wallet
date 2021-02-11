@@ -6,6 +6,7 @@ import Column from "./Column";
 import Button from "./Button";
 import Peer from "./Peer";
 import Blockchain from "./Blockchain";
+import Method from "./Method";
 
 const SActions = styled.div`
   margin: 0;
@@ -43,7 +44,9 @@ const ProposalDisplay = (props: ProposalDisplayProps) => {
         <React.Fragment>
           <h6>{"Methods"}</h6>
           {methods.map((method) => (
-            <p key={`proposal:method:${method}`}>{method}</p>
+            <Method key={`proposal:method:${method}`}>
+              <div>{method}</div>
+            </Method>
           ))}
         </React.Fragment>
       ) : null}

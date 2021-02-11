@@ -10,7 +10,7 @@ import Blockchain from "./Blockchain";
 import { getChainRequestRender } from "../chains";
 import Peer from "./Peer";
 
-const SRequestValues = styled.div`
+const SValue = styled.div`
   font-family: monospace;
   width: 100%;
   font-size: 12px;
@@ -57,7 +57,7 @@ const RequestDisplay = (props: RequestDisplayProps) => {
       {params.map((param) => (
         <React.Fragment key={param.label}>
           <h6>{param.label}</h6>
-          <SRequestValues>{param.value}</SRequestValues>
+          <SValue>{param.value}</SValue>
         </React.Fragment>
       ))}
       <SActions>

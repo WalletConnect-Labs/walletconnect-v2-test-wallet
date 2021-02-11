@@ -2,7 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 import { colors, shadows } from "../styles";
 
-const SRequestButton = styled.div`
+const SMethod = styled.div`
   border: none;
   background: rgb(${colors.white});
   border-style: none;
@@ -20,8 +20,9 @@ const SRequestButton = styled.div`
   border-radius: 8px;
   box-shadow: ${shadows.hard};
   cursor: pointer;
+  margin-bottom: 10px;
 `;
 
-const RequestButton = (props: any) => <SRequestButton {...props} />;
+const Method = (props: any) => <SMethod {...props} />;
 
-export default RequestButton;
+export default Method;

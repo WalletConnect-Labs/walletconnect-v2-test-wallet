@@ -7,7 +7,7 @@ import Input from "./Input";
 import Button from "./Button";
 import Column from "./Column";
 import Blockchain from "./Blockchain";
-import RequestButton from "./RequestButton";
+import Method from "./Method";
 
 const SSection = styled.div`
   width: 100%;
@@ -23,10 +23,6 @@ const SSession = styled.div`
   & > div {
     margin-left: 10px;
   }
-`;
-
-const SRequest = styled(RequestButton)`
-  margin-bottom: 10px;
 `;
 
 const SActions = styled.div`
@@ -107,9 +103,12 @@ const DefaultDisplay = (props: DefaultDisplayProps) => {
                 <h6>{"Requests"}</h6>
                 {requests.map((request) =>
                   isJsonRpcRequest(request.payload) ? (
-                    <SRequest key={request.payload.id} onClick={() => openRequest(request)}>
+                    <Method
+                      key={`default:request:${request.payload.id}`}
+                      onClick={() => openRequest(request)}
+                    >
                       <div>{request.payload.method}</div>
-                    </SRequest>
+                    </Method>
                   ) : null,
                 )}
               </React.Fragment>

@@ -1,14 +1,12 @@
 import * as React from "react";
 import styled from "styled-components";
 import { SessionTypes } from "@walletconnect/types";
-import { JsonRpcRequest } from "@json-rpc-tools/utils";
 
 import Column from "./Column";
 import Button from "./Button";
-
-import { getChainMetadata } from "../chains";
 import Peer from "./Peer";
 import Blockchain from "./Blockchain";
+import Method from "./Method";
 
 const SActions = styled.div`
   margin: 0;
@@ -51,13 +49,19 @@ const SessionDisplay = (props: SessionDisplayProps) => {
         <React.Fragment>
           <h6>{"Methods"}</h6>
           {methods.map((method) => (
-            <p key={`session:method:${method}`}>{method}</p>
+            <Method disable key={`session:method:${method}`}>
+              <div>{method}</div>
+            </Method>
           ))}
         </React.Fragment>
       ) : null}
       <SActions>
         <Button onClick={resetCard}>{`Go Back`}</Button>
-        <Button outline onClick={() => disconnect(session.topic)}>{`disconnect`}</Button>
+        <Button
+          color={"red"}
+          outline
+          onClick={() => disconnect(session.topic)}
+        >{`disconnect`}</Button>
       </SActions>
     </Column>
   );

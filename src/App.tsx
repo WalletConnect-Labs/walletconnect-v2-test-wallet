@@ -8,6 +8,7 @@ import {
   JsonRpcResponse,
   formatJsonRpcError,
   JsonRpcRequest,
+  formatJsonRpcRequest,
 } from "@json-rpc-tools/utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
@@ -113,7 +114,7 @@ class App extends React.Component<{}> {
       ).flat();
       this.setState({ loading: false, storage, client, wallet, accounts });
       this.subscribeToEvents();
-      await this.checkConnectedSessions();
+      await this.checkPersistedState();
     } catch (e) {
       this.setState({ loading: false });
       throw e;
@@ -236,12 +237,24 @@ class App extends React.Component<{}> {
     });
   };
 
-  public checkConnectedSessions = async () => {
+  public checkPersistedState = async () => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
+    const requests = this.state.client.session.history.values
+      .map((record) => {
+        if (typeof record.response !== "undefined") return undefined;
+        const request: SessionTypes.PayloadEvent = {
+          topic: record.topic,
+          payload: formatJsonRpcRequest(record.request.method, record.request.params, record.id),
+          chainId: record.chainId,
+        };
+        return request;
+      })
+      .filter((x) => typeof x !== "undefined");
+    console.log(requests);
     const sessions = this.state.client.session.values;
-    this.setState({ sessions });
+    this.setState({ sessions, requests });
   };
 
   public openScanner = () => {
