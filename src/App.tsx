@@ -124,7 +124,7 @@ class App extends React.Component<{}> {
   public approveSession = async (proposal: SessionTypes.Proposal) => {
     console.log("ACTION", "approveSession");
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     if (typeof this.state.accounts === "undefined") {
       throw new Error("Accounts is undefined");
@@ -145,7 +145,7 @@ class App extends React.Component<{}> {
   public rejectSession = async (proposal: SessionTypes.Proposal) => {
     console.log("ACTION", "rejectSession");
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     await this.state.client.reject({ proposal });
     this.resetCard();
@@ -154,7 +154,7 @@ class App extends React.Component<{}> {
   public disconnect = async (topic: string) => {
     console.log("ACTION", "disconnect");
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     await this.state.client.disconnect({
       topic,
@@ -172,12 +172,12 @@ class App extends React.Component<{}> {
     console.log("ACTION", "subscribeToEvents");
 
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
 
     this.state.client.on(CLIENT_EVENTS.session.proposal, (proposal: SessionTypes.Proposal) => {
       if (typeof this.state.client === "undefined") {
-        throw new Error("WalletConnect is not initialized");
+        throw new Error("Client is not initialized");
       }
       console.log("EVENT", "session_proposal");
       const unsupportedChains = [];
@@ -227,19 +227,25 @@ class App extends React.Component<{}> {
     );
 
     this.state.client.on(CLIENT_EVENTS.session.created, () => {
+      if (typeof this.state.client === "undefined") {
+        throw new Error("Client is not initialized");
+      }
       console.log("EVENT", "session_created");
-      this.setState({ sessions: this.state.sessions.values });
+      this.setState({ sessions: this.state.client.session.values });
     });
 
     this.state.client.on(CLIENT_EVENTS.session.deleted, () => {
+      if (typeof this.state.client === "undefined") {
+        throw new Error("Client is not initialized");
+      }
       console.log("EVENT", "session_deleted");
-      this.setState({ sessions: this.state.sessions.values });
+      this.setState({ sessions: this.state.client.session.values });
     });
   };
 
   public checkPersistedState = async () => {
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     const requests = this.state.client.session.history.values
       .map((record) => {
@@ -287,7 +293,7 @@ class App extends React.Component<{}> {
     const uri = typeof data === "string" ? data : "";
     if (!uri) return;
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     await this.state.client.pair({ uri });
   };
@@ -310,7 +316,7 @@ class App extends React.Component<{}> {
 
   public openRequest = async (request: SessionTypes.PayloadEvent) => {
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     const { peer } = await this.state.client.session.get(request.topic);
     this.openCard({ type: "request", data: { request, peer } });
@@ -324,14 +330,14 @@ class App extends React.Component<{}> {
 
   public respondRequest = async (topic: string, response: JsonRpcResponse) => {
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     await this.state.client.respond({ topic, response });
   };
 
   public approveRequest = async (request: SessionTypes.PayloadEvent) => {
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     try {
       if (typeof this.state.wallet === "undefined") {
@@ -357,7 +363,7 @@ class App extends React.Component<{}> {
 
   public rejectRequest = async (request: SessionTypes.PayloadEvent) => {
     if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
+      throw new Error("Client is not initialized");
     }
     this.state.client.respond({
       topic: request.topic,
