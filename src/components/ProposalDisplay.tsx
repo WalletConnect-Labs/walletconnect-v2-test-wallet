@@ -21,8 +21,8 @@ const SActions = styled.div`
 
 interface ProposalDisplayProps {
   proposal: SessionTypes.Proposal;
-  approveSession: any;
-  rejectSession: any;
+  approveSession: (proposal: SessionTypes.Proposal) => Promise<void>;
+  rejectSession: (proposal: SessionTypes.Proposal) => Promise<void>;
 }
 
 const ProposalDisplay = (props: ProposalDisplayProps) => {

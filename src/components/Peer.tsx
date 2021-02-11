@@ -3,6 +3,22 @@ import styled from "styled-components";
 import { SessionTypes } from "@walletconnect/types";
 import { colors, fonts } from "../styles";
 
+const SPeerOneLiner = styled.div`
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  border: 2px solid rgb(${colors.darkGrey});
+  padding: 5px;
+
+  & img {
+    width: 40px;
+    height: 40px;
+  }
+  & > div {
+    margin-left: 10px;
+  }
+`;
+
 const SPeerCard = styled.div`
   align-items: center;
   justify-content: center;
@@ -14,19 +30,6 @@ const SPeerCard = styled.div`
   padding: 5px;
   & > div {
     margin: 4px auto;
-  }
-`;
-
-const SPeerOneLiner = styled(SPeerCard as any)`
-  display: flex;
-  align-items: center;
-
-  & img {
-    width: 40px;
-    height: 40px;
-  }
-  & > div {
-    margin-left: 10px;
   }
 `;
 

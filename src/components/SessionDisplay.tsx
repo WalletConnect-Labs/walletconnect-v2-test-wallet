@@ -21,8 +21,8 @@ const SActions = styled.div`
 
 interface SessionDisplayProps {
   session: SessionTypes.Created;
-  resetCard: any;
-  disconnect: any;
+  resetCard: () => void;
+  disconnect: (topic: string) => void;
 }
 
 const SessionDisplay = (props: SessionDisplayProps) => {

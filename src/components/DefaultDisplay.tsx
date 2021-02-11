@@ -9,8 +9,19 @@ import Column from "./Column";
 import Blockchain from "./Blockchain";
 import Method from "./Method";
 
+import settingsIcon from "../assets/settings.svg";
+
 const SSection = styled.div`
   width: 100%;
+  position: relative;
+`;
+
+const SSettingsIcon = styled.img`
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  right: 8px;
+  top: 15px;
 `;
 
 const SSession = styled.div`
@@ -63,17 +74,28 @@ interface DefaultDisplayProps {
   accounts: string[];
   sessions: SessionTypes.Created[];
   requests: SessionTypes.PayloadEvent[];
-  openSession: any;
-  openRequest: any;
-  openScanner: any;
-  onURI: any;
+  openSession: (session: SessionTypes.Created) => void;
+  openRequest: (request: SessionTypes.PayloadEvent) => Promise<void>;
+  openScanner: () => void;
+  openSettings: () => void;
+  onURI: (data: any) => void;
 }
 
 const DefaultDisplay = (props: DefaultDisplayProps) => {
-  const { accounts, sessions, requests, openSession, openRequest, openScanner, onURI } = props;
+  const {
+    accounts,
+    sessions,
+    requests,
+    openSession,
+    openRequest,
+    openScanner,
+    openSettings,
+    onURI,
+  } = props;
   return (
     <Column>
       <SSection>
+        <SSettingsIcon src={settingsIcon} alt="Settings" onClick={openSettings} />
         {!!accounts.length ? (
           <React.Fragment>
             <h6>{"Accounts"}</h6>

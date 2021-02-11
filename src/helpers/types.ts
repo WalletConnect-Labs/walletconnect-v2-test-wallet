@@ -43,5 +43,10 @@ export declare namespace Cards {
     data: { request: SessionTypes.PayloadEvent; peer: SessionTypes.Peer };
   }
 
-  export type All = Default | Proposal | Session | Request;
+  export interface Settings {
+    type: "settings";
+    data: { mnemonic: string; chains: string[] };
+  }
+
+  export type All = Default | Proposal | Session | Request | Settings;
 }

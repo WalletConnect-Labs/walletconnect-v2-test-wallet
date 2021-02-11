@@ -1,4 +1,5 @@
 import * as encUtils from "enc-utils";
+
 import { Cards } from "./types";
 
 export function capitalize(string: string): string {
@@ -112,4 +113,8 @@ export function isSessionCard(card: Cards.All): card is Cards.Session {
 
 export function isRequestCard(card: Cards.All): card is Cards.Request {
   return card.type === "request";
+}
+
+export function isSettingsCard(card: Cards.All): card is Cards.Settings {
+  return card.type === "settings";
 }

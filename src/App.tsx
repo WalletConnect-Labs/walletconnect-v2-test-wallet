@@ -25,8 +25,9 @@ import {
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
 } from "./constants";
-import { Cards, isProposalCard, isRequestCard, isSessionCard } from "./helpers";
+import { Cards, isProposalCard, isRequestCard, isSessionCard, isSettingsCard } from "./helpers";
 import SessionDisplay from "./components/SessionDisplay";
+import SettingsDisplay from "./components/SettingsDisplay";
 
 const SContainer = styled.div`
   display: flex;
@@ -99,11 +100,11 @@ class App extends React.Component<{}> {
     this.init();
   }
 
-  public init = async () => {
+  public init = async (mnemonic?: string) => {
     this.setState({ loading: true });
     try {
       const storage = new KeyValueStorage();
-      const wallet = await Wallet.init({ chains: this.state.chains, storage });
+      const wallet = await Wallet.init({ chains: this.state.chains, storage, mnemonic });
       const client = await Client.init({
         relayProvider: DEFAULT_RELAY_PROVIDER,
         logger: "debug",
@@ -163,9 +164,13 @@ class App extends React.Component<{}> {
     await this.resetCard();
   };
 
+  public importMnemonic = async (mnemonic: string) => {
+    this.resetApp();
+    this.init(mnemonic);
+  };
+
   public resetApp = async () => {
-    const { storage, client, wallet, accounts } = this.state;
-    this.setState({ ...INITIAL_STATE, storage, client, wallet, accounts });
+    this.setState({ ...INITIAL_STATE });
   };
 
   public subscribeToEvents = () => {
@@ -322,6 +327,15 @@ class App extends React.Component<{}> {
     this.openCard({ type: "request", data: { request, peer } });
   };
 
+  public openSettings = () => {
+    if (typeof this.state.wallet === "undefined") {
+      throw new Error("Wallet is not initialized");
+    }
+    const { chains } = this.state;
+    const { mnemonic } = this.state.wallet;
+    this.openCard({ type: "settings", data: { mnemonic, chains } });
+  };
+
   public removeFromPending = async (request: SessionTypes.PayloadEvent) => {
     this.setState({
       requests: this.state.requests.filter((x) => x.payload.id !== request.payload.id),
@@ -390,7 +404,7 @@ class App extends React.Component<{}> {
       content = (
         <RequestDisplay
           chainId={request.chainId || chains[0]}
-          request={request.payload as JsonRpcRequest}
+          request={request}
           peerMeta={peer.metadata}
           approveRequest={this.approveRequest}
           rejectRequest={this.rejectRequest}
@@ -401,6 +415,9 @@ class App extends React.Component<{}> {
       content = (
         <SessionDisplay session={session} resetCard={this.resetCard} disconnect={this.disconnect} />
       );
+    } else if (isSettingsCard(card)) {
+      const { mnemonic, chains } = card.data;
+      content = <SettingsDisplay mnemonic={mnemonic} chains={chains} resetCard={this.resetCard} />;
     } else {
       content = (
         <DefaultDisplay
@@ -410,6 +427,7 @@ class App extends React.Component<{}> {
           openSession={this.openSession}
           openRequest={this.openRequest}
           openScanner={this.openScanner}
+          openSettings={this.openSettings}
           onURI={this.onURI}
         />
       );

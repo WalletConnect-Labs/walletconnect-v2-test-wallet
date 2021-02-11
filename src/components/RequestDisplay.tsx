@@ -1,7 +1,7 @@
 import * as React from "react";
 import styled from "styled-components";
 import { SessionTypes } from "@walletconnect/types";
-import { JsonRpcRequest } from "@json-rpc-tools/utils";
+import { isJsonRpcResponse } from "@json-rpc-tools/utils";
 
 import Column from "./Column";
 import Button from "./Button";
@@ -34,18 +34,18 @@ const SActions = styled.div`
 
 interface RequestDisplayProps {
   chainId: string;
-  request: JsonRpcRequest;
+  request: SessionTypes.PayloadEvent;
   peerMeta: SessionTypes.Metadata;
-  approveRequest: any;
-  rejectRequest: any;
+  approveRequest: (request: SessionTypes.PayloadEvent) => void;
+  rejectRequest: (request: SessionTypes.PayloadEvent) => void;
 }
 
 const RequestDisplay = (props: RequestDisplayProps) => {
   const { chainId, request, peerMeta, approveRequest, rejectRequest } = props;
-
-  const params = getChainRequestRender(request, chainId);
-  console.log("RENDER", "method", request.method);
-  console.log("RENDER", "params", request.params);
+  if (isJsonRpcResponse(request.payload)) return null;
+  const params = getChainRequestRender(request.payload, chainId);
+  console.log("RENDER", "method", request.payload.method);
+  console.log("RENDER", "params", request.payload.params);
   console.log("RENDER", "formatted", params);
 
   return (
@@ -61,8 +61,8 @@ const RequestDisplay = (props: RequestDisplayProps) => {
         </React.Fragment>
       ))}
       <SActions>
-        <Button onClick={approveRequest}>{`Approve`}</Button>
-        <Button onClick={rejectRequest}>{`Reject`}</Button>
+        <Button onClick={() => approveRequest(request)}>{`Approve`}</Button>
+        <Button onClick={() => rejectRequest(request)}>{`Reject`}</Button>
       </SActions>
     </Column>
   );
