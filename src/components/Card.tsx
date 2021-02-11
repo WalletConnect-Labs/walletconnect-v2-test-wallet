@@ -33,7 +33,7 @@ const Card = (props: CardProps) => {
 };
 
 Card.defaultProps = {
-  maxWidth: 600,
+  maxWidth: 400,
 };
 
 export default Card;

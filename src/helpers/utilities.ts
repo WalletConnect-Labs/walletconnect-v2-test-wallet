@@ -1,9 +1,10 @@
 import * as encUtils from "enc-utils";
+import { Cards } from "./types";
 
 export function capitalize(string: string): string {
   return string
     .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 }
 
@@ -17,7 +18,7 @@ export function ellipseText(text = "", maxLength = 9999): string {
   const result =
     text
       .split(" ")
-      .filter(word => {
+      .filter((word) => {
         currentLength += word.length;
         if (ellipse || currentLength >= _maxLength) {
           ellipse = true;
@@ -30,7 +31,14 @@ export function ellipseText(text = "", maxLength = 9999): string {
   return result;
 }
 
-export function ellipseAddress(address = "", width = 10): string {
+export function calcEllipseLength(): number {
+  const windowWidth = getViewportDimensions().x;
+  const maxWidth = 468;
+  const maxChar = 14;
+  return windowWidth > maxWidth ? maxChar : Math.floor(windowWidth * (maxChar / maxWidth));
+}
+
+export function ellipseAddress(address = "", width = calcEllipseLength()): string {
   return `${address.slice(0, width)}...${address.slice(-width)}`;
 }
 
@@ -92,4 +100,16 @@ export function convertHexToUtf8(hex: string) {
   } catch (e) {
     return hex;
   }
+}
+
+export function isProposalCard(card: Cards.All): card is Cards.Proposal {
+  return card.type === "proposal";
+}
+
+export function isSessionCard(card: Cards.All): card is Cards.Session {
+  return card.type === "session";
+}
+
+export function isRequestCard(card: Cards.All): card is Cards.Request {
+  return card.type === "request";
 }

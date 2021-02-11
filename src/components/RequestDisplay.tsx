@@ -1,11 +1,14 @@
 import * as React from "react";
 import styled from "styled-components";
+import { SessionTypes } from "@walletconnect/types";
+import { JsonRpcRequest } from "@json-rpc-tools/utils";
 
 import Column from "./Column";
 import Button from "./Button";
+import Blockchain from "./Blockchain";
 
-import { renderRequest } from "../render";
-import { getChainConfig } from "caip-wallet";
+import { getChainRequestRender } from "../chains";
+import Peer from "./Peer";
 
 const SRequestValues = styled.div`
   font-family: monospace;
@@ -16,18 +19,6 @@ const SRequestValues = styled.div`
   word-break: break-word;
   border-radius: 8px;
   margin-bottom: 10px;
-`;
-
-const SConnectedPeer = styled.div`
-  display: flex;
-  align-items: center;
-  & img {
-    width: 40px;
-    height: 40px;
-  }
-  & > div {
-    margin-left: 10px;
-  }
 `;
 
 const SActions = styled.div`
@@ -41,38 +32,40 @@ const SActions = styled.div`
   }
 `;
 
-class RequestDisplay extends React.Component<any, any> {
-  public render() {
-    const { chainId, request, peerMeta, approveRequest, rejectRequest } = this.props;
-
-    const params = renderRequest(request, chainId);
-    console.log("RENDER", "method", request.method);
-    console.log("RENDER", "params", request.params);
-    console.log("RENDER", "formatted", params);
-    const chainName = chainId ? getChainConfig(chainId).name : undefined;
-
-    return (
-      <Column>
-        <h6>{"Request From"}</h6>
-        <SConnectedPeer>
-          <img src={peerMeta.icons[0]} alt={peerMeta.name} />
-          <div>{peerMeta.name}</div>
-        </SConnectedPeer>
-        <h6>{"Chain"}</h6>
-        <p>{chainName}</p>
-        {params.map((param) => (
-          <React.Fragment key={param.label}>
-            <h6>{param.label}</h6>
-            <SRequestValues>{param.value}</SRequestValues>
-          </React.Fragment>
-        ))}
-        <SActions>
-          <Button onClick={approveRequest}>{`Approve`}</Button>
-          <Button onClick={rejectRequest}>{`Reject`}</Button>
-        </SActions>
-      </Column>
-    );
-  }
+interface RequestDisplayProps {
+  chainId: string;
+  request: JsonRpcRequest;
+  peerMeta: SessionTypes.Metadata;
+  approveRequest: any;
+  rejectRequest: any;
 }
+
+const RequestDisplay = (props: RequestDisplayProps) => {
+  const { chainId, request, peerMeta, approveRequest, rejectRequest } = props;
+
+  const params = getChainRequestRender(request, chainId);
+  console.log("RENDER", "method", request.method);
+  console.log("RENDER", "params", request.params);
+  console.log("RENDER", "formatted", params);
+
+  return (
+    <Column>
+      <h6>{"App"}</h6>
+      <Peer oneLiner peerMeta={peerMeta} />
+      <h6>{"Chain"}</h6>
+      <Blockchain key={`request:chain:${chainId}`} chainId={chainId} />
+      {params.map((param) => (
+        <React.Fragment key={param.label}>
+          <h6>{param.label}</h6>
+          <SRequestValues>{param.value}</SRequestValues>
+        </React.Fragment>
+      ))}
+      <SActions>
+        <Button onClick={approveRequest}>{`Approve`}</Button>
+        <Button onClick={rejectRequest}>{`Reject`}</Button>
+      </SActions>
+    </Column>
+  );
+};
 
 export default RequestDisplay;

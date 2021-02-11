@@ -1,8 +1,9 @@
-import { EventEmitter } from "events";
+import { SessionTypes } from "@walletconnect/types";
+import { ChainConfig } from "caip-wallet";
 
 import { AppState } from "../App";
 
-export interface RequestRenderParams {
+export interface ChainRequestRender {
   label: string;
   value: string;
 }
@@ -12,46 +13,35 @@ export interface AppEvents {
   update: (state: AppState, setState: any) => Promise<void>;
 }
 
-export interface LogFn {
-  /* tslint:disable:no-unnecessary-generics */
-  <T extends object>(obj: T, msg?: string, ...args: any[]): void;
-  (msg: string, ...args: any[]): void;
+export interface ChainMetadata extends ChainConfig {
+  logo: string;
+  color: string;
 }
 
-export type LogLevelDefault = "fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent";
-
-export interface LogBindings {
-  level?: LogLevel;
-  [key: string]: any;
+export interface NamespaceMetadata {
+  [reference: string]: ChainMetadata;
 }
 
-export type LogLevel = LogLevelDefault | string;
+export declare namespace Cards {
+  export interface Default {
+    type: "default";
+    data: any;
+  }
 
-export interface LevelMapping {
-  /**
-   * Returns the mappings of level names to their respective internal number representation.
-   */
-  values: { [level: string]: number };
-  /**
-   * Returns the mappings of level internal level numbers to their string representations.
-   */
-  labels: { [level: number]: string };
-}
+  export interface Proposal {
+    type: "proposal";
+    data: { proposal: SessionTypes.Proposal };
+  }
 
-export interface BaseLogger extends EventEmitter {
-  logBindings: LogBindings;
-  level: LogLevel;
-  levels: LevelMapping;
-  levelVal: number;
+  export interface Session {
+    type: "session";
+    data: { session: SessionTypes.Created };
+  }
 
-  bindings(): LogBindings;
-  child(bindings: LogBindings): BaseLogger;
+  export interface Request {
+    type: "request";
+    data: { request: SessionTypes.PayloadEvent; peer: SessionTypes.Peer };
+  }
 
-  fatal: LogFn;
-  error: LogFn;
-  warn: LogFn;
-  info: LogFn;
-  debug: LogFn;
-  trace: LogFn;
-  silent: LogFn;
+  export type All = Default | Proposal | Session | Request;
 }

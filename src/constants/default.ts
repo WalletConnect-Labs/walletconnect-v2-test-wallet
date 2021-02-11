@@ -1,7 +1,7 @@
 import { config } from "caip-api";
 import { jsonrpc } from "caip-wallet";
 
-export const DEFAULT_CHAINS = Object.keys(config.eip155).map((ref) => `eip155:${ref}`);
+export const DEFAULT_CHAINS = Object.keys(config.eip155).map((x) => `eip155:${x}`);
 
 export const DEFAULT_RELAY_PROVIDER = "wss://staging.walletconnect.org";
 

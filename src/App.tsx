@@ -1,30 +1,31 @@
 import * as React from "react";
 import styled from "styled-components";
 import KeyValueStorage from "keyvaluestorage";
-import Wallet, { getChainConfig } from "caip-wallet";
+import Wallet from "caip-wallet";
 import Client, { CLIENT_EVENTS } from "@walletconnect/client";
-import { isJsonRpcRequest, JsonRpcResponse, formatJsonRpcError } from "@json-rpc-tools/utils";
+import {
+  isJsonRpcRequest,
+  JsonRpcResponse,
+  formatJsonRpcError,
+  JsonRpcRequest,
+} from "@json-rpc-tools/utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
 
-import Button from "./components/Button";
 import Card from "./components/Card";
-import Input from "./components/Input";
-import Header from "./components/Header";
-import Column from "./components/Column";
-import PeerMeta from "./components/PeerMeta";
+import DefaultDisplay from "./components/DefaultDisplay";
 import RequestDisplay from "./components/RequestDisplay";
-import RequestButton from "./components/RequestButton";
-import AccountDetails from "./components/AccountDetails";
+import ProposalDisplay from "./components/ProposalDisplay";
 import QRCodeScanner, { QRCodeValidateResponse } from "./components/QRCodeScanner";
 
-import logo from "./assets/walletconnect-logo.png";
 import {
   DEFAULT_APP_METADATA,
   DEFAULT_CHAINS,
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
 } from "./constants";
+import { Cards, isProposalCard, isRequestCard, isSessionCard } from "./helpers";
+import SessionDisplay from "./components/SessionDisplay";
 
 const SContainer = styled.div`
   display: flex;
@@ -56,95 +57,32 @@ const SContent = styled.div`
   justify-content: center;
 `;
 
-const SLogo = styled.div`
-  padding: 10px 0;
-  display: flex;
-  max-height: 100px;
-  & img {
-    width: 100%;
-  }
-`;
-
-const SActions = styled.div`
-  margin: 0;
-  margin-top: 20px;
-
-  display: flex;
-  justify-content: space-around;
-  & > * {
-    margin: 0 5px;
-  }
-`;
-
-const SActionsColumn = styled(SActions as any)`
-  flex-direction: row;
-  align-items: center;
-
-  margin: 24px 0 6px;
-
-  & > p {
-    font-weight: 600;
-  }
-`;
-
-const SButton = styled(Button)`
-  width: 50%;
-  height: 40px;
-`;
-
-const SInput = styled(Input)`
-  width: 50%;
-  margin: 10px;
-  font-size: 14px;
-  height: 40px;
-`;
-
-const SConnectedPeer = styled.div`
-  display: flex;
-  align-items: center;
-  & img {
-    width: 40px;
-    height: 40px;
-  }
-  & > div {
-    margin-left: 10px;
-  }
-`;
-
-const SRequestButton = styled(RequestButton)`
-  margin-bottom: 10px;
-`;
-
 export interface AppState {
   client: Client | undefined;
   storage: KeyValueStorage | undefined;
   wallet: Wallet | undefined;
-  proposal: SessionTypes.Proposal | undefined;
-  session: SessionTypes.Created | undefined;
   loading: boolean;
   scanner: boolean;
-  connected: boolean;
   chains: string[];
   accounts: string[];
+  sessions: SessionTypes.Created[];
   requests: SessionTypes.PayloadEvent[];
   results: any[];
-  payload: SessionTypes.PayloadEvent | undefined;
+  card: Cards.All;
 }
 
 export const INITIAL_STATE: AppState = {
   client: undefined,
   storage: undefined,
   wallet: undefined,
-  proposal: undefined,
-  session: undefined,
   loading: false,
   scanner: false,
-  connected: false,
   chains: DEFAULT_CHAINS,
   accounts: [],
+  sessions: [],
   requests: [],
   results: [],
-  payload: undefined,
+  card: { type: "default", data: {} },
 };
 
 class App extends React.Component<{}> {
@@ -170,7 +108,9 @@ class App extends React.Component<{}> {
         logger: "debug",
         storage,
       });
-      const accounts = await wallet.getAccounts(this.state.chains[0]);
+      const accounts = (
+        await Promise.all<string[]>(this.state.chains.map((chainId) => wallet.getAccounts(chainId)))
+      ).flat();
       this.setState({ loading: false, storage, client, wallet, accounts });
       this.subscribeToEvents();
       await this.checkConnectedSessions();
@@ -180,53 +120,46 @@ class App extends React.Component<{}> {
     }
   };
 
-  public approveSession = async () => {
+  public approveSession = async (proposal: SessionTypes.Proposal) => {
     console.log("ACTION", "approveSession");
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
-    }
-    if (typeof this.state.proposal === "undefined") {
-      throw new Error("Proposal is undefined");
     }
     if (typeof this.state.accounts === "undefined") {
       throw new Error("Accounts is undefined");
     }
     const accounts = this.state.accounts.filter((account) => {
       const chainId = account.split("@")[1];
-      return this.state.proposal?.permissions.blockchain.chains.includes(chainId);
+      return proposal.permissions.blockchain.chains.includes(chainId);
     });
     const response = {
       state: { accounts },
       metadata: getSessionMetadata() || DEFAULT_APP_METADATA,
     };
-    const session = await this.state.client.approve({ proposal: this.state.proposal, response });
-    this.setState({ proposal: undefined, session });
+    const session = await this.state.client.approve({ proposal, response });
+    this.resetCard();
+    this.setState({ session });
   };
 
-  public rejectSession = async () => {
+  public rejectSession = async (proposal: SessionTypes.Proposal) => {
     console.log("ACTION", "rejectSession");
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-    if (typeof this.state.proposal === "undefined") {
-      throw new Error("Proposal is undefined");
-    }
-    await this.state.client.reject({ proposal: this.state.proposal });
-    this.setState({ proposal: undefined });
+    await this.state.client.reject({ proposal });
+    this.resetCard();
   };
 
-  public disconnect = async () => {
+  public disconnect = async (topic: string) => {
     console.log("ACTION", "disconnect");
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-    if (typeof this.state.session === "undefined") {
-      throw new Error("Session is not connected");
-    }
     await this.state.client.disconnect({
-      topic: this.state.session.topic,
+      topic,
       reason: "User disconnected session",
     });
+    await this.resetCard();
   };
 
   public resetApp = async () => {
@@ -262,7 +195,7 @@ class App extends React.Component<{}> {
       if (unsupportedMethods.length) {
         return this.state.client.reject({ proposal });
       }
-      this.setState({ proposal });
+      this.openProposal(proposal);
     });
 
     this.state.client.on(
@@ -294,13 +227,12 @@ class App extends React.Component<{}> {
 
     this.state.client.on(CLIENT_EVENTS.session.created, () => {
       console.log("EVENT", "session_created");
-      this.setState({ connected: true });
+      this.setState({ sessions: this.state.sessions.values });
     });
 
-    this.state.client.on(CLIENT_EVENTS.session.deleted, (session: SessionTypes.Settled) => {
-      if (session.topic !== this.state.session?.topic) return;
+    this.state.client.on(CLIENT_EVENTS.session.deleted, () => {
       console.log("EVENT", "session_deleted");
-      this.resetApp();
+      this.setState({ sessions: this.state.sessions.values });
     });
   };
 
@@ -308,16 +240,18 @@ class App extends React.Component<{}> {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-    if (typeof this.state.session !== "undefined") return;
-    if (this.state.client.session.topics.length) {
-      const session = await this.state.client.session.get(this.state.client.session.topics[0]);
-      this.setState({ session, connected: true });
-    }
+    const sessions = this.state.client.session.values;
+    this.setState({ sessions });
   };
 
-  public toggleScanner = () => {
-    console.log("ACTION", "toggleScanner");
-    this.setState({ scanner: !this.state.scanner });
+  public openScanner = () => {
+    console.log("ACTION", "openScanner");
+    this.setState({ scanner: true });
+  };
+
+  public closeScanner = () => {
+    console.log("ACTION", "closeScanner");
+    this.setState({ scanner: false });
   };
 
   public onQRCodeValidate = (data: string) => {
@@ -333,12 +267,7 @@ class App extends React.Component<{}> {
 
   public onQRCodeScan = async (data: any) => {
     this.onURI(data);
-    this.toggleScanner();
-  };
-
-  public onURIPaste = async (e: any) => {
-    const data = e.target.value;
-    this.onURI(data);
+    this.closeScanner();
   };
 
   public onURI = async (data: any) => {
@@ -354,18 +283,30 @@ class App extends React.Component<{}> {
     throw error;
   };
 
-  public onQRCodeClose = () => this.toggleScanner();
+  public onQRCodeClose = () => this.closeScanner();
 
-  public openRequest = (request: SessionTypes.PayloadEvent) => this.setState({ payload: request });
+  public openCard = (card: Cards.All) => this.setState({ card });
 
-  public closeRequest = async () => {
-    if (typeof this.state.payload === "undefined") {
-      throw new Error("Payload is undefined");
+  public resetCard = () => this.setState({ card: INITIAL_STATE.card });
+
+  public openProposal = (proposal: SessionTypes.Proposal) =>
+    this.openCard({ type: "proposal", data: { proposal } });
+
+  public openSession = (session: SessionTypes.Created) =>
+    this.openCard({ type: "session", data: { session } });
+
+  public openRequest = async (request: SessionTypes.PayloadEvent) => {
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
     }
-    const filteredRequests = this.state.requests.filter(
-      (request) => request.payload.id !== this.state.payload?.payload.id,
-    );
-    this.setState({ requests: filteredRequests, payload: undefined });
+    const { peer } = await this.state.client.session.get(request.topic);
+    this.openCard({ type: "request", data: { request, peer } });
+  };
+
+  public removeFromPending = async (request: SessionTypes.PayloadEvent) => {
+    this.setState({
+      requests: this.state.requests.filter((x) => x.payload.id !== request.payload.id),
+    });
   };
 
   public respondRequest = async (topic: string, response: JsonRpcResponse) => {
@@ -375,147 +316,94 @@ class App extends React.Component<{}> {
     await this.state.client.respond({ topic, response });
   };
 
-  public approveRequest = async () => {
+  public approveRequest = async (request: SessionTypes.PayloadEvent) => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
     try {
-      if (typeof this.state.payload === "undefined") {
-        throw new Error("Payload is undefined");
-      }
       if (typeof this.state.wallet === "undefined") {
         throw new Error("Wallet is not initialized");
       }
-      const chainId = this.state.payload.chainId || this.state.chains[0];
-      const response = await this.state.wallet.approve(this.state.payload.payload as any, chainId);
+      const chainId = request.chainId || this.state.chains[0];
+      const response = await this.state.wallet.approve(request.payload as any, chainId);
       this.state.client.respond({
-        topic: this.state.payload.topic,
+        topic: request.topic,
         response,
       });
     } catch (error) {
       console.error(error);
-      if (typeof this.state.payload === "undefined") {
-        throw new Error("Payload is undefined");
-      }
       this.state.client.respond({
-        topic: this.state.payload.topic,
-        response: formatJsonRpcError(this.state.payload.payload.id, "Failed or Rejected Request"),
+        topic: request.topic,
+        response: formatJsonRpcError(request.payload.id, "Failed or Rejected Request"),
       });
     }
 
-    this.closeRequest();
+    await this.removeFromPending(request);
+    await this.resetCard();
   };
 
-  public rejectRequest = async () => {
+  public rejectRequest = async (request: SessionTypes.PayloadEvent) => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-    if (typeof this.state.payload === "undefined") {
-      throw new Error("Payload is undefined");
-    }
     this.state.client.respond({
-      topic: this.state.payload.topic,
-      response: formatJsonRpcError(this.state.payload.payload.id, "Failed or Rejected Request"),
+      topic: request.topic,
+      response: formatJsonRpcError(request.payload.id, "Failed or Rejected Request"),
     });
-    await this.closeRequest();
+    await this.removeFromPending(request);
+    await this.resetCard();
+  };
+
+  public renderCard = () => {
+    const { accounts, sessions, chains, requests, card } = this.state;
+    let content: JSX.Element | undefined;
+    if (isProposalCard(card)) {
+      const { proposal } = card.data;
+      content = (
+        <ProposalDisplay
+          proposal={proposal}
+          approveSession={this.approveSession}
+          rejectSession={this.rejectSession}
+        />
+      );
+    } else if (isRequestCard(card)) {
+      const { request, peer } = card.data;
+      content = (
+        <RequestDisplay
+          chainId={request.chainId || chains[0]}
+          request={request.payload as JsonRpcRequest}
+          peerMeta={peer.metadata}
+          approveRequest={this.approveRequest}
+          rejectRequest={this.rejectRequest}
+        />
+      );
+    } else if (isSessionCard(card)) {
+      const { session } = card.data;
+      content = (
+        <SessionDisplay session={session} resetCard={this.resetCard} disconnect={this.disconnect} />
+      );
+    } else {
+      content = (
+        <DefaultDisplay
+          accounts={accounts}
+          sessions={sessions}
+          requests={requests}
+          openSession={this.openSession}
+          openRequest={this.openRequest}
+          openScanner={this.openScanner}
+          onURI={this.onURI}
+        />
+      );
+    }
+    return <Card>{content}</Card>;
   };
 
   public render() {
-    const {
-      scanner,
-      connected,
-      accounts,
-      session,
-      proposal,
-      chains,
-      requests,
-      payload,
-    } = this.state;
+    const { loading, scanner } = this.state;
     return (
       <React.Fragment>
         <SContainer>
-          <Header
-            disconnect={this.disconnect}
-            connected={connected}
-            chainId={chains[0]}
-            accounts={accounts}
-          />
-          <SContent>
-            <Card maxWidth={400}>
-              <SLogo>
-                <img src={logo} alt={"WalletConnect"} />
-              </SLogo>
-              {!connected ? (
-                proposal ? (
-                  <Column>
-                    <PeerMeta peerMeta={proposal.proposer.metadata} />
-                    <h5>Chains</h5>
-                    {proposal.permissions.blockchain.chains.map((chainId) => (
-                      <p key={`proposal:chainId:${chainId}`}>{getChainConfig(chainId).name}</p>
-                    ))}
-                    <h5>Methods</h5>
-                    {proposal.permissions.jsonrpc.methods.map((method) => (
-                      <p key={`proposal:method:${method}`}>{method}</p>
-                    ))}
-                    <SActions>
-                      <Button onClick={this.approveSession}>{`Approve`}</Button>
-                      <Button onClick={this.rejectSession}>{`Reject`}</Button>
-                    </SActions>
-                  </Column>
-                ) : (
-                  <Column>
-                    <AccountDetails chains={chains} accounts={accounts} />
-                    <SActionsColumn>
-                      <SButton onClick={this.toggleScanner}>{`Scan`}</SButton>
-                      <p>{"OR"}</p>
-                      <SInput onChange={this.onURIPaste} placeholder={"Paste wc: uri"} />
-                    </SActionsColumn>
-                  </Column>
-                )
-              ) : !payload ? (
-                <Column>
-                  <AccountDetails chains={chains} accounts={accounts} />
-                  {session && session.peer ? (
-                    <>
-                      <h6>{"Connected to"}</h6>
-                      <SConnectedPeer>
-                        <img
-                          src={session.peer.metadata.icons[0]}
-                          alt={session.peer.metadata.name}
-                        />
-                        <div>{session.peer.metadata.name}</div>
-                      </SConnectedPeer>
-                    </>
-                  ) : null}
-                  <h6>{"Pending Call Requests"}</h6>
-                  {requests.length ? (
-                    requests.map((request) => (
-                      <SRequestButton
-                        key={request.payload.id}
-                        onClick={() => this.openRequest(request)}
-                      >
-                        <div>
-                          {isJsonRpcRequest(request.payload) ? request.payload.method : "unknown"}
-                        </div>
-                      </SRequestButton>
-                    ))
-                  ) : (
-                    <div>
-                      <div>{"No pending requests"}</div>
-                    </div>
-                  )}
-                </Column>
-              ) : (
-                <RequestDisplay
-                  chainId={payload.chainId || chains[0]}
-                  request={payload.payload}
-                  peerMeta={session?.peer.metadata || DEFAULT_APP_METADATA}
-                  approveRequest={this.approveRequest}
-                  rejectRequest={this.rejectRequest}
-                />
-              )}
-            </Card>
-          </SContent>
+          <SContent>{loading ? "Loading..." : this.renderCard()}</SContent>
           {scanner && (
             <QRCodeScanner
               onValidate={this.onQRCodeValidate}
@@ -525,7 +413,7 @@ class App extends React.Component<{}> {
             />
           )}
         </SContainer>
-        <SVersionNumber>{`v${process.env.REACT_APP_VERSION || "2.0.0-alpha"}`} </SVersionNumber>
+        <SVersionNumber>{`v${process.env.REACT_APP_VERSION || "2.0.0-alpha"}`}</SVersionNumber>
       </React.Fragment>
     );
   }
