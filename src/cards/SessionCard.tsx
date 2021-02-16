@@ -2,11 +2,11 @@ import * as React from "react";
 import styled from "styled-components";
 import { SessionTypes } from "@walletconnect/types";
 
-import Column from "./Column";
-import Button from "./Button";
-import Peer from "./Peer";
-import Blockchain from "./Blockchain";
-import Method from "./Method";
+import Column from "../components/Column";
+import Button from "../components/Button";
+import Peer from "../components/Peer";
+import Blockchain from "../components/Blockchain";
+import Method from "../components/Method";
 
 const SActions = styled.div`
   margin: 0;
@@ -19,13 +19,13 @@ const SActions = styled.div`
   }
 `;
 
-interface SessionDisplayProps {
+interface SessionCardProps {
   session: SessionTypes.Created;
   resetCard: () => void;
   disconnect: (topic: string) => void;
 }
 
-const SessionDisplay = (props: SessionDisplayProps) => {
+const SessionCard = (props: SessionCardProps) => {
   const { session, resetCard, disconnect } = props;
 
   const { accounts } = session.state;
@@ -67,4 +67,4 @@ const SessionDisplay = (props: SessionDisplayProps) => {
   );
 };
 
-export default SessionDisplay;
+export default SessionCard;

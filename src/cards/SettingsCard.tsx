@@ -1,8 +1,8 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import Column from "./Column";
-import Button from "./Button";
+import Column from "../components/Column";
+import Button from "../components/Button";
 import { colors } from "../styles";
 
 const SWarning = styled.div`
@@ -32,13 +32,13 @@ const SActions = styled.div`
   }
 `;
 
-interface SettingsDisplayProps {
+interface SettingsCardProps {
   mnemonic: string;
   chains: string[];
   resetCard: () => void;
 }
 
-const SettingsDisplay = (props: SettingsDisplayProps) => {
+const SettingsCard = (props: SettingsCardProps) => {
   const { mnemonic, resetCard } = props;
 
   return (
@@ -55,4 +55,4 @@ const SettingsDisplay = (props: SettingsDisplayProps) => {
   );
 };
 
-export default SettingsDisplay;
+export default SettingsCard;

@@ -2,7 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 import QrReader from "react-qr-reader";
 
-const SQRCodeScannerContainer = styled.div`
+const SScannerContainer = styled.div`
   position: fixed;
   top: 0;
   left: 0;
@@ -13,7 +13,7 @@ const SQRCodeScannerContainer = styled.div`
   background: rgb(0, 0, 0);
 `;
 
-const SQRCodeScannerWrapper = styled.div`
+const SScannerWrapper = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
@@ -52,23 +52,23 @@ const SSecondLine = styled(SFirstLine as any)`
   transform: rotate(90deg);
 `;
 
-export interface QRCodeValidateResponse {
+export interface ScannerValidation {
   error: Error | null;
   result: any | null;
 }
 
-interface QRCodeScannerProps {
-  onValidate: (data: string) => QRCodeValidateResponse;
+interface ScannerProps {
+  onValidate: (data: string) => ScannerValidation;
   onScan: (data: any) => void;
   onError: (error: Error) => void;
   onClose: () => void;
 }
 
-interface QRCodeScannerState {
+interface ScannerState {
   delay: number | false;
 }
 
-class QRCodeScanner extends React.Component<QRCodeScannerProps, QRCodeScannerState> {
+class Scanner extends React.Component<ScannerProps, ScannerState> {
   public state = {
     delay: 300,
   };
@@ -109,22 +109,22 @@ class QRCodeScanner extends React.Component<QRCodeScannerProps, QRCodeScannerSta
   }
   public render() {
     return (
-      <SQRCodeScannerContainer>
+      <SScannerContainer>
         <SCloseButton onClick={this.onClose}>
           <SFirstLine />
           <SSecondLine />
         </SCloseButton>
-        <SQRCodeScannerWrapper>
+        <SScannerWrapper>
           <QrReader
             delay={this.state.delay}
             onError={this.handleError}
             onScan={this.handleScan}
             style={{ width: "100%" }}
           />
-        </SQRCodeScannerWrapper>
-      </SQRCodeScannerContainer>
+        </SScannerWrapper>
+      </SScannerContainer>
     );
   }
 }
 
-export default QRCodeScanner;
+export default Scanner;

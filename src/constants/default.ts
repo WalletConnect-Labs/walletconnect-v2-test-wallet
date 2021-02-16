@@ -7,6 +7,8 @@ export const DEFAULT_RELAY_PROVIDER = "wss://staging.walletconnect.org";
 
 export const DEFAULT_METHODS = jsonrpc.eip155.wallet.auth;
 
+export const DEFAULT_LOGGER = "debug";
+
 export const DEFAULT_APP_METADATA = {
   name: "Test Wallet",
   description: "Test Wallet for WalletConnect",

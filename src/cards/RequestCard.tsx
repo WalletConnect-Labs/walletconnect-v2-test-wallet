@@ -3,12 +3,12 @@ import styled from "styled-components";
 import { SessionTypes } from "@walletconnect/types";
 import { isJsonRpcResponse } from "@json-rpc-tools/utils";
 
-import Column from "./Column";
-import Button from "./Button";
-import Blockchain from "./Blockchain";
+import Column from "../components/Column";
+import Button from "../components/Button";
+import Blockchain from "../components/Blockchain";
 
 import { getChainRequestRender } from "../chains";
-import Peer from "./Peer";
+import Peer from "../components/Peer";
 
 const SValue = styled.div`
   font-family: monospace;
@@ -32,7 +32,7 @@ const SActions = styled.div`
   }
 `;
 
-interface RequestDisplayProps {
+interface RequestCardProps {
   chainId: string;
   request: SessionTypes.PayloadEvent;
   peerMeta: SessionTypes.Metadata;
@@ -40,7 +40,7 @@ interface RequestDisplayProps {
   rejectRequest: (request: SessionTypes.PayloadEvent) => void;
 }
 
-const RequestDisplay = (props: RequestDisplayProps) => {
+const RequestCard = (props: RequestCardProps) => {
   const { chainId, request, peerMeta, approveRequest, rejectRequest } = props;
   if (isJsonRpcResponse(request.payload)) return null;
   const params = getChainRequestRender(request.payload, chainId);
@@ -68,4 +68,4 @@ const RequestDisplay = (props: RequestDisplayProps) => {
   );
 };
 
-export default RequestDisplay;
+export default RequestCard;

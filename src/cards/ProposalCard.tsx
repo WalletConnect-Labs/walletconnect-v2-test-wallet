@@ -2,11 +2,11 @@ import * as React from "react";
 import styled from "styled-components";
 import { SessionTypes } from "@walletconnect/types";
 
-import Column from "./Column";
-import Button from "./Button";
-import Peer from "./Peer";
-import Blockchain from "./Blockchain";
-import Method from "./Method";
+import Column from "../components/Column";
+import Button from "../components/Button";
+import Peer from "../components/Peer";
+import Blockchain from "../components/Blockchain";
+import Method from "../components/Method";
 
 const SActions = styled.div`
   margin: 0;
@@ -19,13 +19,13 @@ const SActions = styled.div`
   }
 `;
 
-interface ProposalDisplayProps {
+interface ProposalCardProps {
   proposal: SessionTypes.Proposal;
   approveSession: (proposal: SessionTypes.Proposal) => Promise<void>;
   rejectSession: (proposal: SessionTypes.Proposal) => Promise<void>;
 }
 
-const ProposalDisplay = (props: ProposalDisplayProps) => {
+const ProposalCard = (props: ProposalCardProps) => {
   const { proposal, approveSession, rejectSession } = props;
   const { chains } = proposal.permissions.blockchain;
   const { methods } = proposal.permissions.jsonrpc;
@@ -58,4 +58,4 @@ const ProposalDisplay = (props: ProposalDisplayProps) => {
   );
 };
 
-export default ProposalDisplay;
+export default ProposalCard;

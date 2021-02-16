@@ -7,27 +7,28 @@ import {
   isJsonRpcRequest,
   JsonRpcResponse,
   formatJsonRpcError,
-  JsonRpcRequest,
   formatJsonRpcRequest,
 } from "@json-rpc-tools/utils";
 import { getSessionMetadata } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
 
 import Card from "./components/Card";
-import DefaultDisplay from "./components/DefaultDisplay";
-import RequestDisplay from "./components/RequestDisplay";
-import ProposalDisplay from "./components/ProposalDisplay";
-import QRCodeScanner, { QRCodeValidateResponse } from "./components/QRCodeScanner";
+import Scanner, { ScannerValidation } from "./components/Scanner";
+
+import DefaultCard from "./cards/DefaultCard";
+import RequestCard from "./cards/RequestCard";
+import ProposalCard from "./cards/ProposalCard";
+import SessionCard from "./cards/SessionCard";
+import SettingsCard from "./cards/SettingsCard";
 
 import {
   DEFAULT_APP_METADATA,
   DEFAULT_CHAINS,
+  DEFAULT_LOGGER,
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
 } from "./constants";
 import { Cards, isProposalCard, isRequestCard, isSessionCard, isSettingsCard } from "./helpers";
-import SessionDisplay from "./components/SessionDisplay";
-import SettingsDisplay from "./components/SettingsDisplay";
 
 const SContainer = styled.div`
   display: flex;
@@ -107,7 +108,7 @@ class App extends React.Component<{}> {
       const wallet = await Wallet.init({ chains: this.state.chains, storage, mnemonic });
       const client = await Client.init({
         relayProvider: DEFAULT_RELAY_PROVIDER,
-        logger: "debug",
+        logger: DEFAULT_LOGGER,
         storage,
       });
       const accounts = (
@@ -120,48 +121,6 @@ class App extends React.Component<{}> {
       this.setState({ loading: false });
       throw e;
     }
-  };
-
-  public approveSession = async (proposal: SessionTypes.Proposal) => {
-    console.log("ACTION", "approveSession");
-    if (typeof this.state.client === "undefined") {
-      throw new Error("Client is not initialized");
-    }
-    if (typeof this.state.accounts === "undefined") {
-      throw new Error("Accounts is undefined");
-    }
-    const accounts = this.state.accounts.filter((account) => {
-      const chainId = account.split("@")[1];
-      return proposal.permissions.blockchain.chains.includes(chainId);
-    });
-    const response = {
-      state: { accounts },
-      metadata: getSessionMetadata() || DEFAULT_APP_METADATA,
-    };
-    const session = await this.state.client.approve({ proposal, response });
-    this.resetCard();
-    this.setState({ session });
-  };
-
-  public rejectSession = async (proposal: SessionTypes.Proposal) => {
-    console.log("ACTION", "rejectSession");
-    if (typeof this.state.client === "undefined") {
-      throw new Error("Client is not initialized");
-    }
-    await this.state.client.reject({ proposal });
-    this.resetCard();
-  };
-
-  public disconnect = async (topic: string) => {
-    console.log("ACTION", "disconnect");
-    if (typeof this.state.client === "undefined") {
-      throw new Error("Client is not initialized");
-    }
-    await this.state.client.disconnect({
-      topic,
-      reason: "User disconnected session",
-    });
-    await this.resetCard();
   };
 
   public importMnemonic = async (mnemonic: string) => {
@@ -268,6 +227,8 @@ class App extends React.Component<{}> {
     this.setState({ sessions, requests });
   };
 
+  // ---- Scanner --------------------------------------------------------------//
+
   public openScanner = () => {
     console.log("ACTION", "openScanner");
     this.setState({ scanner: true });
@@ -278,8 +239,8 @@ class App extends React.Component<{}> {
     this.setState({ scanner: false });
   };
 
-  public onQRCodeValidate = (data: string) => {
-    const res: QRCodeValidateResponse = { error: null, result: null };
+  public onScannerValidate = (data: string) => {
+    const res: ScannerValidation = { error: null, result: null };
     try {
       res.result = data;
     } catch (error) {
@@ -289,10 +250,16 @@ class App extends React.Component<{}> {
     return res;
   };
 
-  public onQRCodeScan = async (data: any) => {
+  public onScannerScan = async (data: any) => {
     this.onURI(data);
     this.closeScanner();
   };
+
+  public onScannerError = (error: Error) => {
+    throw error;
+  };
+
+  public onScannerClose = () => this.closeScanner();
 
   public onURI = async (data: any) => {
     const uri = typeof data === "string" ? data : "";
@@ -303,11 +270,7 @@ class App extends React.Component<{}> {
     await this.state.client.pair({ uri });
   };
 
-  public onQRCodeError = (error: Error) => {
-    throw error;
-  };
-
-  public onQRCodeClose = () => this.closeScanner();
+  // ---- Cards --------------------------------------------------------------//
 
   public openCard = (card: Cards.All) => this.setState({ card });
 
@@ -335,6 +298,52 @@ class App extends React.Component<{}> {
     const { mnemonic } = this.state.wallet;
     this.openCard({ type: "settings", data: { mnemonic, chains } });
   };
+
+  // ---- Session --------------------------------------------------------------//
+
+  public approveSession = async (proposal: SessionTypes.Proposal) => {
+    console.log("ACTION", "approveSession");
+    if (typeof this.state.client === "undefined") {
+      throw new Error("Client is not initialized");
+    }
+    if (typeof this.state.accounts === "undefined") {
+      throw new Error("Accounts is undefined");
+    }
+    const accounts = this.state.accounts.filter((account) => {
+      const chainId = account.split("@")[1];
+      return proposal.permissions.blockchain.chains.includes(chainId);
+    });
+    const response = {
+      state: { accounts },
+      metadata: getSessionMetadata() || DEFAULT_APP_METADATA,
+    };
+    const session = await this.state.client.approve({ proposal, response });
+    this.resetCard();
+    this.setState({ session });
+  };
+
+  public rejectSession = async (proposal: SessionTypes.Proposal) => {
+    console.log("ACTION", "rejectSession");
+    if (typeof this.state.client === "undefined") {
+      throw new Error("Client is not initialized");
+    }
+    await this.state.client.reject({ proposal });
+    this.resetCard();
+  };
+
+  public disconnect = async (topic: string) => {
+    console.log("ACTION", "disconnect");
+    if (typeof this.state.client === "undefined") {
+      throw new Error("Client is not initialized");
+    }
+    await this.state.client.disconnect({
+      topic,
+      reason: "User disconnected session",
+    });
+    await this.resetCard();
+  };
+
+  // ---- Requests --------------------------------------------------------------//
 
   public removeFromPending = async (request: SessionTypes.PayloadEvent) => {
     this.setState({
@@ -387,13 +396,15 @@ class App extends React.Component<{}> {
     await this.resetCard();
   };
 
+  // ---- Render --------------------------------------------------------------//
+
   public renderCard = () => {
     const { accounts, sessions, chains, requests, card } = this.state;
     let content: JSX.Element | undefined;
     if (isProposalCard(card)) {
       const { proposal } = card.data;
       content = (
-        <ProposalDisplay
+        <ProposalCard
           proposal={proposal}
           approveSession={this.approveSession}
           rejectSession={this.rejectSession}
@@ -402,7 +413,7 @@ class App extends React.Component<{}> {
     } else if (isRequestCard(card)) {
       const { request, peer } = card.data;
       content = (
-        <RequestDisplay
+        <RequestCard
           chainId={request.chainId || chains[0]}
           request={request}
           peerMeta={peer.metadata}
@@ -413,14 +424,14 @@ class App extends React.Component<{}> {
     } else if (isSessionCard(card)) {
       const { session } = card.data;
       content = (
-        <SessionDisplay session={session} resetCard={this.resetCard} disconnect={this.disconnect} />
+        <SessionCard session={session} resetCard={this.resetCard} disconnect={this.disconnect} />
       );
     } else if (isSettingsCard(card)) {
       const { mnemonic, chains } = card.data;
-      content = <SettingsDisplay mnemonic={mnemonic} chains={chains} resetCard={this.resetCard} />;
+      content = <SettingsCard mnemonic={mnemonic} chains={chains} resetCard={this.resetCard} />;
     } else {
       content = (
-        <DefaultDisplay
+        <DefaultCard
           accounts={accounts}
           sessions={sessions}
           requests={requests}
@@ -442,11 +453,11 @@ class App extends React.Component<{}> {
         <SContainer>
           <SContent>{loading ? "Loading..." : this.renderCard()}</SContent>
           {scanner && (
-            <QRCodeScanner
-              onValidate={this.onQRCodeValidate}
-              onScan={this.onQRCodeScan}
-              onError={this.onQRCodeError}
-              onClose={this.onQRCodeClose}
+            <Scanner
+              onValidate={this.onScannerValidate}
+              onScan={this.onScannerScan}
+              onError={this.onScannerError}
+              onClose={this.onScannerClose}
             />
           )}
         </SContainer>

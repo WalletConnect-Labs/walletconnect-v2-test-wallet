@@ -3,11 +3,11 @@ import styled from "styled-components";
 import { SessionTypes } from "@walletconnect/types";
 import { isJsonRpcRequest } from "@json-rpc-tools/utils";
 
-import Input from "./Input";
-import Button from "./Button";
-import Column from "./Column";
-import Blockchain from "./Blockchain";
-import Method from "./Method";
+import Input from "../components/Input";
+import Button from "../components/Button";
+import Column from "../components/Column";
+import Blockchain from "../components/Blockchain";
+import Method from "../components/Method";
 
 import settingsIcon from "../assets/settings.svg";
 
@@ -70,7 +70,7 @@ const SInput = styled(Input)`
   height: 40px;
 `;
 
-interface DefaultDisplayProps {
+interface DefaultCardProps {
   accounts: string[];
   sessions: SessionTypes.Created[];
   requests: SessionTypes.PayloadEvent[];
@@ -81,7 +81,7 @@ interface DefaultDisplayProps {
   onURI: (data: any) => void;
 }
 
-const DefaultDisplay = (props: DefaultDisplayProps) => {
+const DefaultCard = (props: DefaultCardProps) => {
   const {
     accounts,
     sessions,
@@ -152,4 +152,4 @@ const DefaultDisplay = (props: DefaultDisplayProps) => {
     </Column>
   );
 };
-export default DefaultDisplay;
+export default DefaultCard;
