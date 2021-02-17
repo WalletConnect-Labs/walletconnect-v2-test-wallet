@@ -5,7 +5,7 @@ import { getChainMetadata } from "../chains";
 import { ellipseAddress } from "../helpers";
 
 interface AccountStyleProps {
-  color: string;
+  rgb: string;
 }
 
 const SAccount = styled.div<AccountStyleProps>`
@@ -16,7 +16,10 @@ const SAccount = styled.div<AccountStyleProps>`
   border-radius: 8px;
   padding: 8px;
   margin: 5px 0;
-  border: ${({ color }) => `2px solid rgb(${color})`};
+  border: ${({ rgb }) => `2px solid rgb(${rgb})`};
+  &.active {
+    box-shadow: ${({ rgb }) => `0 0 8px rgb(${rgb})`};
+  }
 `;
 
 const SChain = styled.div`
@@ -44,7 +47,7 @@ const Blockchain = (props: BlockchainProps) => {
   const chainMeta = getChainMetadata(chainId);
   return (
     <React.Fragment>
-      <SAccount color={chainMeta.color}>
+      <SAccount rgb={chainMeta.rgb}>
         <SChain>
           <img src={chainMeta.logo} alt={chainMeta.name} />
           <p>{chainMeta.name}</p>

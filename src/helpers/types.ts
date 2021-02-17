@@ -15,7 +15,7 @@ export interface AppEvents {
 
 export interface ChainMetadata extends ChainConfig {
   logo: string;
-  color: string;
+  rgb: string;
 }
 
 export interface NamespaceMetadata {
