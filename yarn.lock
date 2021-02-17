@@ -4117,10 +4117,10 @@ caip-api@^1.4.3:
     "@json-rpc-tools/types" "^1.6.1"
     caip "^0.9.2"
 
-caip-wallet@^1.5.2:
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/caip-wallet/-/caip-wallet-1.5.2.tgz#38f8607988268155affbb7f475c9a26842d2c3fa"
-  integrity sha512-h3Xl0DrfwdFHfAdsFIFDNHt4a+uqLZzlUhP7BdyfqRMra3Wt0ZKPaobX8EAMjUepKxWcsnTQJQTlQC2I6gfc5g==
+caip-wallet@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/caip-wallet/-/caip-wallet-1.6.0.tgz#b50fdd4f1efae70a459bc1c9bdd44b5f1a5f47a4"
+  integrity sha512-qbQ/KHYWh7y41X2Pe2cxRlcBsTT3Hoq4wNjZ9k10i+ztdEfKGJksEagtKOjnPuypVFypVqjbVP7Xz4nAWky78w==
   dependencies:
     "@json-rpc-tools/blockchain" "^1.6.1"
     "@json-rpc-tools/provider" "^1.6.1"

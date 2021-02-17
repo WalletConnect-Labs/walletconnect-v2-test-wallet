@@ -40,7 +40,7 @@
     "@walletconnect/utils": "^2.0.0-alpha.23",
     "axios": "^0.21.1",
     "blockies-ts": "^1.0.0",
-    "caip-wallet": "^1.5.2",
+    "caip-wallet": "^1.6.0",
     "keyvaluestorage": "^0.7.1",
     "prop-types": "^15.7.2",
     "react": "^17.0.1",
