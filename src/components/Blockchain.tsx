@@ -2,7 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 
 import { getChainMetadata } from "../chains";
-import { ellipseAddress } from "../helpers";
+import { ChainMetadata, ellipseAddress } from "../helpers";
 
 interface AccountStyleProps {
   rgb: string;
@@ -44,7 +44,12 @@ interface BlockchainProps {
 
 const Blockchain = (props: BlockchainProps) => {
   const { chainId, address } = props;
-  const chainMeta = getChainMetadata(chainId);
+  let chainMeta: ChainMetadata;
+  try {
+    chainMeta = getChainMetadata(chainId);
+  } catch (e) {
+    return null;
+  }
   return (
     <React.Fragment>
       <SAccount rgb={chainMeta.rgb}>
