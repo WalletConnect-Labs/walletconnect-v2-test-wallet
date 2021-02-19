@@ -23,7 +23,7 @@ import SettingsCard from "./cards/SettingsCard";
 
 import {
   DEFAULT_APP_METADATA,
-  DEFAULT_CHAINS,
+  DEFAULT_TEST_CHAINS,
   DEFAULT_LOGGER,
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
@@ -80,7 +80,7 @@ export const INITIAL_STATE: AppState = {
   wallet: undefined,
   loading: false,
   scanner: false,
-  chains: DEFAULT_CHAINS,
+  chains: DEFAULT_TEST_CHAINS,
   accounts: [],
   sessions: [],
   requests: [],
